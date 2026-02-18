@@ -15,7 +15,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.NetworkInformation;
 
-namespace NetworkMonitorAgent.Core.Services
+namespace EtwIpGrabber.EventInterpreter.Models
 {
     [SupportedOSPlatform("windows")]
     public sealed class EtwConnectionMonitorClean : BackgroundService
@@ -427,6 +427,5 @@ namespace NetworkMonitorAgent.Core.Services
             public DateTime LastSeenUtc;
             public bool Established;   // true dopo CONNECT/ACCEPT, false dopo DISCONNECT/TTL
         }
-
     }
 }
