@@ -18,10 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="EtwStructure\EventDispatcher\" />
     <Folder Include="EtwStructure\Metrics&amp;Health\" />
-    <Folder Include="EtwStructure\RealTimeConsumer\" />
-    <Folder Include="EtwStructure\ProviderConfiguration\" />
-    <Folder Include="EtwStructure\SessionManager\" />
   </ItemGroup>
 </Project>

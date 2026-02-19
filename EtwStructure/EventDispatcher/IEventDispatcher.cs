@@ -1,7 +1,9 @@
-﻿namespace EtwIpGrabber.EtwStructure.EventDispatcher
+﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+
+namespace EtwIpGrabber.EtwStructure.EventDispatcher
 {
     public interface IEventDispatcher
     {
-        bool TryEnqueue(EVENT_RECORD* record);
+        unsafe bool TryEnqueue(EVENT_RECORD* record);
     }
 }

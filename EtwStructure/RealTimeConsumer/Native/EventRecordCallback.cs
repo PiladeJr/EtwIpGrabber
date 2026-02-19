@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+using System.Runtime.InteropServices;
 
 namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
 {
-    internal interface EventRecordCallback
-    {
-    }
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    public unsafe delegate void EventRecordCallback(
+        EVENT_RECORD* eventRecord);
 }

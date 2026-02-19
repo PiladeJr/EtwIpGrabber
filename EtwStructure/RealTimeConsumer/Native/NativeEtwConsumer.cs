@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+using System.Runtime.InteropServices;
 
 namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
 {

@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
+using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 
-namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
+namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
 {
     [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
     public unsafe struct EVENT_TRACE_LOGFILE

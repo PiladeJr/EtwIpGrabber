@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+using System.Collections.Concurrent;
 
 namespace EtwIpGrabber.EtwStructure.EventDispatcher
 {
