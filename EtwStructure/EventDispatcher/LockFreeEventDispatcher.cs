@@ -1,4 +1,5 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
+using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 using System.Collections.Concurrent;
 
 namespace EtwIpGrabber.EtwStructure.EventDispatcher
@@ -22,26 +23,26 @@ namespace EtwIpGrabber.EtwStructure.EventDispatcher
         /// <summary>
         /// Coda concorrente utilizzata come staging buffer per i puntatori agli eventi.
         /// </summary>
-        private readonly ConcurrentQueue<IntPtr> _queue;
+        private readonly ConcurrentQueue<EventRecordSnapshot> _queue;
 
         /// <summary>
         /// Inizializza una nuova istanza di <see cref="LockFreeEventDispatcher"/>.
         /// </summary>
         public LockFreeEventDispatcher()
         {
-            _queue = new ConcurrentQueue<IntPtr>();
+            _queue = new ConcurrentQueue<EventRecordSnapshot>();
         }
 
         /// <summary>
         /// Tenta di accodare un evento ETW per l'elaborazione asincrona.
         /// </summary>
-        /// <param name="record">Puntatore alla struttura nativa <c>EVENT_RECORD</c>.</param>
+        /// <param name="snapshot">Snapshot copia del puntatore alla struttura nativa <c>EVENT_RECORD</c></param>
         /// <returns>
         /// Sempre <c>true</c> (la coda è unbounded e l'accodamento non può fallire).
         /// </returns>
-        public unsafe bool TryEnqueue(EVENT_RECORD* record)
+        public unsafe bool TryEnqueue(EventRecordSnapshot snapshot)
         {
-            _queue.Enqueue((IntPtr)record);
+            _queue.Enqueue(snapshot);
             return true;
         }
     }

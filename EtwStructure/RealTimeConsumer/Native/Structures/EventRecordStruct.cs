@@ -13,4 +13,13 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
         public IntPtr UserData;
         public IntPtr UserContext;
     }
+
+    public struct EVENT_HEADER_EXTENDED_DATA_ITEM
+    {
+        public ushort Reserved1;
+        public ushort ExtType;
+        public ushort Linkage;
+        public ushort DataSize;
+        public ulong DataPtr;
+    }
 }

@@ -23,7 +23,7 @@
             string sessionName,
             BufferTuningProfile tuningProfile,
             bool realTime = true,
-            bool systemLogger = true)
+            bool systemLogger = false)
         {
             SessionName = sessionName;
 

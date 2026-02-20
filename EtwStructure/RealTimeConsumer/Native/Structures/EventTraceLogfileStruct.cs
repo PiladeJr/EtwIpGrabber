@@ -1,59 +1,35 @@
 ﻿using System.Runtime.InteropServices;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 
 namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
 {
     [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
-    public unsafe struct EVENT_TRACE_LOGFILE
+    public struct EVENT_TRACE_LOGFILE
     {
-        [FieldOffset(0)]
-        public string LogFileName;
+        [FieldOffset(0)] public IntPtr LogFileName;
+        [FieldOffset(8)] public IntPtr LoggerName;
+        [FieldOffset(16)] public long CurrentTime;
+        [FieldOffset(24)] public uint BuffersRead;
+        [FieldOffset(28)] public uint ProcessTraceMode;
 
-        [FieldOffset(8)]
-        public string LoggerName;
-
-        [FieldOffset(16)]
-        public long CurrentTime;
-
-        [FieldOffset(24)]
-        public uint BuffersRead;
-
-        // UNION 1
-        [FieldOffset(28)]
-        public uint LogFileMode;
-
-        [FieldOffset(28)]
-        public uint ProcessTraceMode;
-
+        // EVENT_RECORD union slot
         [FieldOffset(32)]
-        public EVENT_TRACE CurrentEvent;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 88)]
+        public byte[] CurrentEventRecord;
 
-        [FieldOffset(72)]
-        public TRACE_LOGFILE_HEADER LogfileHeader;
+        // TRACE_LOGFILE_HEADER (native = 280 bytes)
+        [FieldOffset(120)]
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 280)]
+        public byte[] LogfileHeader;
 
-        [FieldOffset(328)]
-        public IntPtr BufferCallback;
+        [FieldOffset(400)] public IntPtr BufferCallback;
+        [FieldOffset(408)] public uint BufferSize;
+        [FieldOffset(412)] public uint Filled;
+        [FieldOffset(416)] public uint EventsLost;
 
-        [FieldOffset(336)]
-        public uint BufferSize;
+        [FieldOffset(424)] public IntPtr EventCallback;
+        [FieldOffset(424)] public IntPtr EventRecordCallback;
 
-        [FieldOffset(340)]
-        public uint Filled;
-
-        [FieldOffset(344)]
-        public uint EventsLost;
-
-        // UNION 2
-        [FieldOffset(352)]
-        public IntPtr EventCallback;
-
-        [FieldOffset(352)]
-        public IntPtr EventRecordCallback;
-
-        [FieldOffset(360)]
-        public uint IsKernelTrace;
-
-        [FieldOffset(368)]
-        public IntPtr Context;
+        [FieldOffset(432)] public uint IsKernelTrace;
+        [FieldOffset(440)] public IntPtr Context;
     }
 }

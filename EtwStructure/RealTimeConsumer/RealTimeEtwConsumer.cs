@@ -2,6 +2,7 @@
 using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native;
 using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 using System.Runtime.InteropServices;
+using TraceReloggerLib;
 
 namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
 {
@@ -20,11 +21,19 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
     /// </remarks>
     public sealed class RealtimeEtwConsumer : IRealtimeEtwConsumer
     {
+        private static readonly ILogger<RealtimeEtwConsumer> _logger =
+            LoggerFactory.Create(builder =>
+            {
+                builder.AddConsole();
+            }).CreateLogger<RealtimeEtwConsumer>();
+
         private ulong _traceHandle;
         private Thread _processingThread;
         private readonly IEventDispatcher _dispatcher;
         private EventRecordCallback _callback;
-        
+        private IntPtr _loggerNamePtr;
+        private IntPtr _logfilePtr;
+
         private GCHandle _callbackHandle;
 
         /// <summary>
@@ -42,22 +51,42 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// <param name="sessionName">Nome della sessione ETW a cui collegarsi.</param>
         public unsafe void Start(string sessionName)
         {
-            EVENT_TRACE_LOGFILE logfile = new EVENT_TRACE_LOGFILE
-            {
-                LoggerName = sessionName,
-                ProcessTraceMode =
-                    ProcessTraceMode.PROCESS_TRACE_MODE_REAL_TIME |
-                    ProcessTraceMode.PROCESS_TRACE_MODE_EVENT_RECORD
-            };
+            // Alloca LoggerName (LPWSTR)
+            _loggerNamePtr = Marshal.StringToHGlobalUni(sessionName);
 
+            //Alloca unmanaged EVENT_TRACE_LOGFILE
+            int size = Marshal.SizeOf<EVENT_TRACE_LOGFILE>() +
+                Marshal.SizeOf<TRACE_LOGFILE_HEADER>();
+            _logfilePtr = Marshal.AllocHGlobal(size);
+
+            Span<byte> span = new((void*)_logfilePtr, size);
+            span.Clear();
+
+            var logfile = (EVENT_TRACE_LOGFILE*)_logfilePtr;
+
+            logfile->LoggerName = _loggerNamePtr;
+
+            logfile->ProcessTraceMode =
+                ProcessTraceMode.PROCESS_TRACE_MODE_REAL_TIME |
+                ProcessTraceMode.PROCESS_TRACE_MODE_EVENT_RECORD;
+
+            //Inizializza delegate PRIMA di usarlo
             _callback = OnEventRecord;
+
+            //Pin delegate (lifetime ETW session)
             _callbackHandle = GCHandle.Alloc(_callback);
 
-            logfile.EventRecordCallback =
+            //Ora ottieni function pointer unmanaged
+            logfile->EventRecordCallback =
                 Marshal.GetFunctionPointerForDelegate(_callback);
 
-            _traceHandle = NativeEtwConsumer.OpenTrace(ref logfile);
+            //OpenTrace (NON ref!)
+            _traceHandle = NativeEtwConsumer.OpenTrace(_logfilePtr);
 
+            if (_traceHandle == ulong.MaxValue)
+                throw new InvalidOperationException("OpenTrace failed.");
+
+            //Start ProcessTrace loop su thread dedicato
             _processingThread = new Thread(ProcessLoop)
             {
                 IsBackground = true
@@ -71,11 +100,31 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// </summary>
         private void ProcessLoop()
         {
-            NativeEtwConsumer.ProcessTrace(
-                new[] { _traceHandle },
-                1,
-                IntPtr.Zero,
-                IntPtr.Zero);
+            uint result = NativeEtwConsumer.ProcessTrace(
+            [_traceHandle],
+            1,
+            IntPtr.Zero,
+            IntPtr.Zero);
+
+            if (result == 0)
+            {
+                _logger.LogInformation("ProcessTrace exited normally.");
+                return;
+            }
+
+            const uint ERROR_CANCELLED = 1223;
+            const uint ERROR_WMI_INSTANCE_NOT_FOUND = 4201;
+
+            if (result == ERROR_CANCELLED ||
+                result == ERROR_WMI_INSTANCE_NOT_FOUND)
+            {
+                _logger.LogWarning(
+                    "ProcessTrace stopped: {Code}", result);
+                return;
+            }
+
+            _logger.LogCritical(
+                "ProcessTrace FAILED with error: {Code}", result);
         }
 
         /// <summary>
@@ -84,7 +133,37 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// <param name="record">Puntatore alla struttura nativa <c>EVENT_RECORD</c>.</param>
         private unsafe void OnEventRecord(EVENT_RECORD* record)
         {
-            _dispatcher.TryEnqueue(record);
+            var snapshot = new EventRecordSnapshot
+            {
+                Header = record->EventHeader,
+                ExtendedDataCount = record->ExtendedDataCount,
+                UserDataLength = record->UserDataLength,
+                UserData = new byte[record->UserDataLength],
+                ExtendedData =
+                    new byte[
+                        record->ExtendedDataCount *
+                        sizeof(EVENT_HEADER_EXTENDED_DATA_ITEM)]
+            };
+
+            if (record->UserData != IntPtr.Zero)
+            {
+                Marshal.Copy(
+                    record->UserData,
+                    snapshot.UserData,
+                    0,
+                    record->UserDataLength);
+            }
+
+            if (record->ExtendedData != IntPtr.Zero)
+            {
+                Marshal.Copy(
+                    record->ExtendedData,
+                    snapshot.ExtendedData,
+                    0,
+                    snapshot.ExtendedData.Length);
+            }
+
+            _dispatcher.TryEnqueue(snapshot);
         }
 
         /// <summary>
@@ -92,10 +171,29 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// </summary>
         public void Dispose()
         {
-            NativeEtwConsumer.CloseTrace(_traceHandle);
+            if (_traceHandle != 0)
+            {
+                NativeEtwConsumer.CloseTrace(_traceHandle);
+                _traceHandle = 0;
+            }
+
+            // ETW non deve più accedere alla memoria prima di liberarla
+            if (_logfilePtr != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(_logfilePtr);
+                _logfilePtr = IntPtr.Zero;
+            }
+
+            if (_loggerNamePtr != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(_loggerNamePtr);
+                _loggerNamePtr = IntPtr.Zero;
+            }
 
             if (_callbackHandle.IsAllocated)
+            {
                 _callbackHandle.Free();
+            }
         }
     }
 }

@@ -1,24 +1,47 @@
+using EtwIpGrabber.EtwStructure.EventDispatcher;
+using EtwIpGrabber.EtwStructure.MetricsAndHealth;
+using EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions;
+using EtwIpGrabber.EtwStructure.RealTimeConsumer;
+using EtwIpGrabber.EtwStructure.SessionManager.Abstraction;
+
 namespace EtwIpGrabber
 {
-    public class Worker : BackgroundService
+    public class Worker(
+            ILogger<Worker> logger,
+            IEtwSessionController session,
+            IEtwProviderConfigurator provider,
+            IRealtimeEtwConsumer consumer,
+            EtwTelemetryMonitor monitor) : BackgroundService
     {
-        private readonly ILogger<Worker> _logger;
+        private readonly ILogger<Worker> _logger = logger;
+        private readonly IEtwSessionController _session = session;
+        private readonly IEtwProviderConfigurator _provider = provider;
+        private readonly IRealtimeEtwConsumer _consumer = consumer;
+        private readonly EtwTelemetryMonitor _monitor = monitor;
 
-        public Worker(ILogger<Worker> logger)
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger = logger;
-        }
-
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
+            try
             {
-                if (_logger.IsEnabled(LogLevel.Information))
-                {
-                    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                }
-                await Task.Delay(1000, stoppingToken);
+                _logger.LogInformation("Starting ETW bootstrap...");
+
+                _session.StartOrAttach();
+
+                _provider.EnableProvider(_session.SessionHandle);
+
+                _consumer.Start(_session.SessionName);
+
+                _logger.LogInformation("ETW bootstrap completed successfully.");
+
+                _ = Task.Run(() => _monitor.RunAsync(stoppingToken), stoppingToken);
             }
+            catch (Exception ex)
+            {
+                _logger.LogCritical(ex, "ETW bootstrap FAILED");
+                throw; // importante: lascia crashare dopo aver loggato
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

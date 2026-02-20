@@ -15,8 +15,8 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
         public uint LogFileMode;
         public uint BuffersWritten;
         public Guid LogInstanceGuid;
-        public string LoggerName;
-        public string LogFileName;
+        public IntPtr LoggerName; 
+        public IntPtr LogFileName;  
         public long BootTime;
         public long PerfFreq;
         public long StartTime;

@@ -29,5 +29,5 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
     /// <param name="eventRecord">Puntatore alla struttura nativa <c>EVENT_RECORD</c> fornita da ETW.</param>
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     public unsafe delegate void EventRecordCallback(
-        EVENT_RECORD* eventRecord);
+        EVENT_RECORD* record);
 }

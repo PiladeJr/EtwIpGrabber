@@ -11,13 +11,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Diagnostics.Tracing.TraceEvent" Version="3.1.29" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+	<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.1" />  
     <PackageReference Include="Microsoft.Windows.SDK.Contracts" Version="10.0.26100.7705" />
-	<PackageReference Include="Microsoft.Windows.CsWinRT">
+	  <PackageReference Include="Microsoft.Windows.CsWinRT">
 	  <Version>2.2.0</Version>
 	</PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="EtwStructure\Metrics&amp;Health\" />
   </ItemGroup>
 </Project>

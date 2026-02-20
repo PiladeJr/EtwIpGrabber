@@ -6,8 +6,8 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
     [StructLayout(LayoutKind.Sequential)]
     public struct ETW_BUFFER_CONTEXT
     {
-        public ushort ProcessorNumber;
-        public ushort Alignment;
+        public byte ProcessorNumber;
+        public byte Alignment;
         public ushort LoggerId;
     }
 }

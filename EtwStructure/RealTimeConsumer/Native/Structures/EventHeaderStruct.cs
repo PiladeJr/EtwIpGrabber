@@ -13,6 +13,14 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
         public uint ProcessId;
         public long TimeStamp;
         public Guid ProviderId;
+        public EVENT_DESCRIPTOR EventDescriptor;
+        public ulong ProcessorTime;
+        public Guid ActivityId;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct EVENT_DESCRIPTOR
+    {
         public ushort Id;
         public byte Version;
         public byte Channel;

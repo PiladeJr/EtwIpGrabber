@@ -1,4 +1,5 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
+using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 
 namespace EtwIpGrabber.EtwStructure.EventDispatcher
 {
@@ -31,6 +32,6 @@ namespace EtwIpGrabber.EtwStructure.EventDispatcher
         /// <c>true</c> se l'evento è stato accodato con successo;
         /// <c>false</c> se la coda è piena o l'accodamento non è riuscito.
         /// </returns>
-        unsafe bool TryEnqueue(EVENT_RECORD* record);
+        unsafe bool TryEnqueue(EventRecordSnapshot snapshot);
     }
 }

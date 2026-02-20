@@ -31,7 +31,7 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
         /// <returns>Un valore di tipo <c>TRACEHANDLE</c> (mappato a <c>ulong</c>).</returns>
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
         public static extern ulong OpenTrace(
-            ref EVENT_TRACE_LOGFILE logfile);
+            IntPtr logfilelogfile);
 
         /// <summary>
         /// Avvia il loop di elaborazione degli eventi per gli handle forniti.
