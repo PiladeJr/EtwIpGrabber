@@ -64,6 +64,8 @@ NON deve:
 - conoscere la pipeline
 - gestire persistenza
 
+Si occupa solo di configurare il provider sulla sessione ETW, lasciando ad altri componenti la responsabilità di consumo e parsing.
+
 ### `TcpIpProviderConfigurator`
 Implementa l’abilitazione del provider `Microsoft-Windows-TCPIP` sulla sessione ETW.
 

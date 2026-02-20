@@ -12,16 +12,9 @@ Gestisce:
 
 Questa classe rappresenta il confine tra user-mode .NET e il Kernel Logger Context ETW.
 
-## ⚠ Responsabilità (SRP)
-La classe ha una sola responsabilabilità:
-- Gestire la creazione, il recupero e la chiusura di una ETW Session in modo crash-safe.
 
-NON deve:
-- ❌ abilitare provider
-- ❌ consumare eventi
-- ❌ parsare ETW payload
-- ❌ gestire pipeline
-- ❌ conoscere TCP logic
+La classe ha una sola responsabilabilità.
+Gestire la creazione, il recupero e la chiusura di una ETW Session in modo crash-safe.
 
 ## 🧱 Componenti interni
 ### 🔹 `_config`
@@ -58,8 +51,7 @@ Oppure recuperato via:
 Rappresenta:
 - Kernel Logger Context
 
-Se perso:
-- → impossibile stoppare la sessione
+Se perso è impossibile stoppare la sessione
 
 ### 🔹 `_factory`
 ```c#
