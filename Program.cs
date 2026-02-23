@@ -9,6 +9,7 @@ using EtwIpGrabber.EtwStructure.SessionManager.Abstraction;
 using EtwIpGrabber.EtwStructure.SessionManager.Configuration;
 using EtwIpGrabber.EtwStructure.SessionManager.Configuration.Implementation;
 using EtwIpGrabber.EtwStructure.SessionManager.Native;
+using Microsoft.Extensions.Logging.EventLog;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddWindowsService();
@@ -32,7 +33,8 @@ builder.Services.AddSingleton<IEtwProviderConfigurator, TcpIpProviderConfigurato
 builder.Services.AddSingleton<IRealtimeEtwConsumer, RealtimeEtwConsumer>(sp =>
 {
     var dispatcher = sp.GetRequiredService<BoundedEventRingBuffer>();
-    return new RealtimeEtwConsumer(dispatcher);
+    var logger = sp.GetRequiredService<ILogger<RealtimeEtwConsumer>>();
+    return new RealtimeEtwConsumer(dispatcher, logger);
 });
 
 // monitor
@@ -46,7 +48,12 @@ builder.Logging.ClearProviders();
 builder.Logging.AddEventLog(settings =>
 {
     settings.SourceName = "EtwIpGrabber";
+    settings.LogName = "Application";
 });
+
+builder.Logging.AddFilter<EventLogLoggerProvider>(
+    "",
+    LogLevel.Information);
 
 var host = builder.Build();
 host.Run();

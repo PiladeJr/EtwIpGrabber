@@ -21,11 +21,7 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
     /// </remarks>
     public sealed class RealtimeEtwConsumer : IRealtimeEtwConsumer
     {
-        private static readonly ILogger<RealtimeEtwConsumer> _logger =
-            LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-            }).CreateLogger<RealtimeEtwConsumer>();
+        private readonly ILogger<RealtimeEtwConsumer> _logger;
 
         private ulong _traceHandle;
         private Thread _processingThread;
@@ -40,9 +36,10 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// Inizializza una nuova istanza di <see cref="RealtimeEtwConsumer"/>.
         /// </summary>
         /// <param name="dispatcher">Dispatcher per l'accodamento degli eventi ETW.</param>
-        public RealtimeEtwConsumer(IEventDispatcher dispatcher)
+        public RealtimeEtwConsumer(IEventDispatcher dispatcher, ILogger<RealtimeEtwConsumer> logger)
         {
             _dispatcher = dispatcher;
+            _logger = logger;
         }
 
         /// <summary>
@@ -80,7 +77,7 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
             logfile->EventRecordCallback =
                 Marshal.GetFunctionPointerForDelegate(_callback);
 
-            //OpenTrace (NON ref!)
+            //OpenTrace
             _traceHandle = NativeEtwConsumer.OpenTrace(_logfilePtr);
 
             if (_traceHandle == ulong.MaxValue)

@@ -3,17 +3,11 @@ using EtwIpGrabber.EtwStructure.MetricsAndHealth;
 
 namespace EtwIpGrabber
 {
-    public sealed class EtwTelemetryMonitor(
-        BoundedEventRingBuffer buffer,
-        EtwMetricsCollector metrics)
+    public sealed class EtwTelemetryMonitor(BoundedEventRingBuffer buffer, EtwMetricsCollector metrics, ILogger<EtwTelemetryMonitor> logger)
     {
         private readonly BoundedEventRingBuffer _buffer = buffer;
         private readonly EtwMetricsCollector _metrics = metrics;
-        private static readonly ILogger<EtwTelemetryMonitor> _logger =
-            LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-            }).CreateLogger<EtwTelemetryMonitor>();
+        private readonly ILogger<EtwTelemetryMonitor> _logger = logger;
 
         public async Task RunAsync(CancellationToken token)
         {
@@ -27,14 +21,11 @@ namespace EtwIpGrabber
                 long rate = now - last;
                 last = now;
 
-                _logger.LogInformation(@"
-                ETW TCPIP INGESTION
-                Events/sec : {rate}
-                QueueDepth : {depth}
-                Dropped    : {dropped}",
-                rate,
-                _buffer.Depth,
-                _metrics.Dropped);
+                _logger.LogInformation(
+                    "ETW TCPIP Ingestion | Events/sec: {Rate}, QueueDepth: {Depth}, Dropped: {Dropped}",
+                    rate,
+                    _buffer.Depth,
+                    _metrics.Dropped);
             }
         }
     }

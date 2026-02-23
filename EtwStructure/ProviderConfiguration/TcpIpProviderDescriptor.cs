@@ -36,7 +36,11 @@
         public const byte TRACE_LEVEL_INFORMATION = 4;
 
         // Keyword per eventi TCPIP
-        public const ulong TCPIP_KEYWORD = 0x10;
+        public const ulong TCPIP_KEYWORD =
+            0x10 |   // Connect
+            0x20 |   // Disconnect
+            0x40 |   // Retransmit
+            0x80;    // Accept
 
         public Guid Guid => ProviderGuid;
         public byte Level => TRACE_LEVEL_INFORMATION;

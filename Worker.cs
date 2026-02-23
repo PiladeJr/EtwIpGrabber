@@ -19,7 +19,7 @@ namespace EtwIpGrabber
         private readonly IRealtimeEtwConsumer _consumer = consumer;
         private readonly EtwTelemetryMonitor _monitor = monitor;
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try
             {
@@ -33,15 +33,13 @@ namespace EtwIpGrabber
 
                 _logger.LogInformation("ETW bootstrap completed successfully.");
 
-                _ = Task.Run(() => _monitor.RunAsync(stoppingToken), stoppingToken);
+                await _monitor.RunAsync(stoppingToken);
             }
             catch (Exception ex)
             {
                 _logger.LogCritical(ex, "ETW bootstrap FAILED");
                 throw; // importante: lascia crashare dopo aver loggato
             }
-
-            return Task.CompletedTask;
         }
     }
 }
