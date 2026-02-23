@@ -1,46 +1,93 @@
-﻿# TcpIpProviderConfiguration
+﻿# TcpIp Provider Configuration
 
 ## 🎯 Scopo
-Il modulo `TcpIpProviderConfiguration` è responsabile dell’abilitazione del provider ETW manifest-based:
-- `Microsoft-Windows-TCPIP`
 
-Sulla sessione ETW creata da `EtwSessionController`.
+Il modulo `TcpIpProviderConfiguration` è responsabile dell'abilitazione del provider ETW manifest-based:
 
-Questo provider espone eventi semantici relativi al lifecycle delle connessioni TCP, generati direttamente dalla TCP state machine all'interno del driver kernel `tcpip.sys`.
+```
+Microsoft-Windows-TCPIP
+```
+
+sulla sessione ETW creata da `EtwSessionController`.
+
+Questo provider espone **eventi semantici** relativi al lifecycle delle connessioni TCP generati direttamente dalla **TCP state machine** all'interno del driver kernel:
+
+```
+tcpip.sys
+```
+
+### Capacità
 
 Il modulo consente di:
-- osservare connessioni TCP stabilite
-- rilevare initiator e listener
-- identificare eventi di disconnect (FIN / RST)
-- ricostruire start e end delle connessioni
-- alimentare algoritmi di detection
+- ✔️ Osservare connessioni TCP stabilite
+- ✔️ Rilevare initiator e listener
+- ✔️ Identificare eventi di disconnect (FIN / RST)
+- ✔️ Ricostruire start e end delle connessioni
+- ✔️ Alimentare algoritmi di detection
 
-## 🧠 Modello di osservabilità
-A differenza dei kernel providers legacy (abilitati tramite EnableFlags), il provider `Microsoft-Windows-TCPIP` è:
-- manifest-based
-- versionabile
-- TDH-compatible
-- session-scoped
+---
 
-Questo significa che:
-- gli eventi sono tipizzati
-- la sessione è isolata da altri consumer
-- l’abilitazione non interferisce con altri servizi (es. Windows Defender)
-- lo stop della sessione non ha impatti globali
+## 🧠 Modello di Osservabilità
 
-Gli eventi generati rappresentano:
-- `TCP state transitions`
+A differenza dei kernel providers legacy (abilitati tramite `EnableFlags`), il provider:
 
-E NON singoli segmenti di rete.
+```
+Microsoft-Windows-TCPIP
+```
 
-## 📦 Componenti del modulo
-### `TcpIpProviderDescriptor`
-Rappresenta la configurazione statica del provider ETW:
-- GUID del provider
-- livello minimo di tracing
-- keyword da abilitare
+è:
+- **Manifest-based** → Versionabile
+- **TDH-compatible** → Type information disponibile
+- **Session-scoped** → Isolato per sessione
 
-Questo oggetto definisce:
+### Implicazioni
+
+| Aspetto | Beneficio |
+|---|---|
+| Tipizzazione eventi | Parsing strutturato |
+| Abilitazione per-sessione | Isolamento da altri consumer |
+| Isolamento sessione | No interferenza con Windows Defender |
+| Stop sessione sicuro | No impatti globali |
+
+⚠️ **Importante:** Gli eventi generati rappresentano:
+→ **TCP state transitions**
+
+E **NON** singoli segmenti di rete.
+
+---
+
+## ⚙️ Runtime Filtering (EnableTraceEx2)
+
+L'abilitazione del provider avviene tramite:
+
+```c#
+EnableTraceEx2()
+```
+
+Questa API non si limita ad abilitare il provider ma **configura anche il filtro di emissione lato kernel** tramite:
+
+- `Level`
+- `MatchAnyKeyword`
+- `MatchAllKeyword`
+
+### Comportamento Critico
+
+Solo gli eventi che **soddisfano questi criteri** verranno emessi nella sessione.
+
+Un set errato di keyword può causare:
+- ✔️ Provider correttamente abilitato
+- ❌ Assenza totale di eventi
+- ❌ Nessun errore o warning runtime
+
+⚠️ **Per questo motivo la configurazione di `MatchAnyKeyword` è parte critica della pipeline di ingestione.**
+
+---
+
+## 🧱 Componenti del Modulo
+
+### 🔹 TcpIpProviderDescriptor
+
+Rappresenta la **configurazione statica** del provider ETW.
 
 | Campo | Descrizione |
 |---|---|
@@ -48,81 +95,92 @@ Questo oggetto definisce:
 | `Level` | `TRACE_LEVEL_INFORMATION` |
 | `Keywords` | TCP lifecycle events |
 
-Il descriptor è utilizzato dal configuratore per abilitare il provider sulla sessione ETW.
+Il descriptor viene utilizzato dal configuratore per **definire il filtro di emissione lato kernel**.
 
-### `IEtwProviderConfigurator`
-Definisce il contratto per l’abilitazione di un provider manifest-based su una sessione ETW attiva.
+---
 
-Responsabilità:
-- abilitare il provider tramite `EnableTraceEx2`
-- configurare level e keyword
-- applicare parametri di enablement avanzati
+### 🔹 IEtwProviderConfigurator
 
-NON deve:
-- consumare eventi
-- parsare payload ETW
-- conoscere la pipeline
-- gestire persistenza
+Definisce il **contratto** per l'abilitazione di un provider manifest-based su una sessione ETW attiva.
 
-Si occupa solo di configurare il provider sulla sessione ETW, lasciando ad altri componenti la responsabilità di consumo e parsing.
+**Responsabilità:**
+- ✔️ Abilitare il provider tramite `EnableTraceEx2`
+- ✔️ Configurare level e keyword
+- ✔️ Applicare parametri avanzati di enablement
 
-### `TcpIpProviderConfigurator`
-Implementa l’abilitazione del provider `Microsoft-Windows-TCPIP` sulla sessione ETW.
+**NON deve:**
+- ❌ Consumare eventi
+- ❌ Parsare payload ETW
+- ❌ Conoscere la pipeline
+- ❌ Gestire persistenza
 
-Chiama:
-```text
+---
+
+### 🔹 TcpIpProviderConfigurator
+
+Implementa l'abilitazione del provider `Microsoft-Windows-TCPIP`.
+
+**Chiama:**
+```
 EnableTraceEx2()
 ```
 
-Specificando:
-```text
-Level
-MatchAnyKeyword
-ENABLE_TRACE_PARAMETERS
-```
+**Configurando:**
+- `Level`
+- `MatchAnyKeyword`
+- `ENABLE_TRACE_PARAMETERS`
 
-Per configurare il comportamento del provider nella sessione.
+---
 
-## 🔐 PID reuse mitigation
+## 🔐 PID Reuse Mitigation
+
 Il configuratore abilita:
-```text
+
+```
 EVENT_ENABLE_PROPERTY_PROCESS_START_KEY
 ```
 
-Tramite:
-```text
+tramite:
+
+```
 ENABLE_TRACE_PARAMETERS.EnableProperty
 ```
 
-Questo richiede al kernel di arricchire gli eventi TCP con una:
-- Process Start Key
+Questo **richiede al kernel** di arricchire gli eventi TCP con una:
 
-Un identificatore monotonicamente crescente associato al processo al momento della creazione.
+→ **Process Start Key**
 
-Questo è fondamentale perché:
-- i PID possono essere riutilizzati dal sistema
-- una connessione TCP può durare più del processo che l’ha creata
-- senza correlazione stabile si rischia di associare la connessione a un processo errato
+identificatore **monotonicamente crescente** assegnato al processo alla creazione.
 
-L’uso della Process Start Key consente:
-- correlazione PID → processo affidabile
-- maggiore accuratezza nella detection
-- integrità del Community ID associato al processo
+### Perché è Fondamentale?
 
-## 🧭 Sequenza di inizializzazione
-L’abilitazione del provider avviene dopo la creazione o il recupero della sessione ETW:
+- 🔄 I PID possono essere **riutilizzati**
+- ⏱️ Una connessione TCP può durare **più del processo che l'ha creata**
+- 📤 Eventi di rundown possono arrivare **post-termination**
 
-```text
+**Senza questa correlazione stabile si rischia di:**
+- ❌ Attribuire una connessione al processo errato
+- ❌ Corrompere la ricostruzione del lifecycle TCP
+- ❌ Generare Community ID associati al soggetto sbagliato
+
+---
+
+## 🧭 Sequenza di Inizializzazione
+
+```
 EtwSessionController.StartOrAttach()
-    ↓
+            ↓
 TcpIpProviderConfigurator.EnableProvider()
-    ↓
+            ↓
 RealtimeConsumer.OpenTrace()
+            ↓
+         ✅ Risultato
 ```
 
-## ✅ Risultato
-Dopo l’abilitazione:
-- il provider `Microsoft-Windows-TCPIP` è attivo sulla sessione
-- gli eventi di lifecycle TCP sono disponibili in realtime
-- il flusso è TDH-compatible
-- la correlazione con il processo è PID-safe
+### Stato Post-Abilitazione
+
+Dopo l'abilitazione:
+- ✔️ Il provider TCPIP è **attivo sulla sessione**
+- ✔️ Gli eventi di lifecycle TCP sono **disponibili in realtime**
+- ✔️ Il flusso è **TDH-compatible**
+- ✔️ La correlazione **PID → processo** è **reuse-safe**

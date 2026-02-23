@@ -1,5 +1,4 @@
 ﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 using System.Collections.Concurrent;
 
 namespace EtwIpGrabber.EtwStructure.EventDispatcher
@@ -9,14 +8,19 @@ namespace EtwIpGrabber.EtwStructure.EventDispatcher
     /// come staging buffer per gli eventi ETW.
     /// </summary>
     /// <remarks>
-    /// Questa classe riceve i puntatori agli <c>EVENT_RECORD</c> dalla callback ETW
-    /// e li inoltra alla pipeline interna. In questa fase
-    /// il puntatore viene semplicemente convertito in <c>IntPtr</c> e accodato.
-    /// <para>
-    /// Nota: questa implementazione è provvisoria e verrà sostituita con una coda
-    /// lock-free a dimensione fissa per gestire backpressure e prevenire crescita
-    /// incontrollata della memoria sotto carico elevato.
-    /// </para>
+    /// Questa classe riceve snapshot copiati degli EVENT_RECORD
+    /// prodotti dalla callback ETW.
+    /// 
+    /// Il contenuto di EVENT_RECORD (UserData, ExtendedData)
+    /// è valido esclusivamente per la durata della callback
+    /// e deve essere copiato prima del return.
+    /// 
+    /// L'uso di uno snapshot garantisce che:
+    /// <list type="bullet">
+    ///   <item><description>la memoria ETW non venga riutilizzata dal kernel;</description></item>
+    ///   <item><description>non si verifichino use-after-return;</description></item>
+    ///   <item><description>la pipeline possa elaborare eventi asincroni in sicurezza.</description></item>
+    /// </list>
     /// </remarks>
     public sealed class LockFreeEventDispatcher : IEventDispatcher
     {

@@ -11,12 +11,10 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
         [FieldOffset(24)] public uint BuffersRead;
         [FieldOffset(28)] public uint ProcessTraceMode;
 
-        // EVENT_RECORD union slot
         [FieldOffset(32)]
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 88)]
         public byte[] CurrentEventRecord;
 
-        // TRACE_LOGFILE_HEADER (native = 280 bytes)
         [FieldOffset(120)]
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 280)]
         public byte[] LogfileHeader;

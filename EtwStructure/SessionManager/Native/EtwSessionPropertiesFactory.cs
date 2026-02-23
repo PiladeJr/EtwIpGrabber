@@ -29,6 +29,14 @@ namespace EtwIpGrabber.EtwStructure.SessionManager.Native
     /// Il buffer restituito deve essere liberato dal chiamante con <c>Marshal.FreeHGlobal()</c>
     /// dopo <c>StartTrace()</c> o <c>ControlTrace()</c>.
     /// Il mancato rilascio causa memory leak nel processo del servizio.
+    /// <br/>
+    /// Il valore di <c>Wnode.Flags</c> viene impostato a
+    /// WNODE_FLAG_TRACED_GUID (0x00020000),
+    /// necessario affinché ETW interpreti il buffer come
+    /// tracing session properties e non come MOF registration.
+    /// 
+    /// Un valore errato causa StartTrace failure con
+    /// ERROR_INVALID_PARAMETER.
     /// </remarks>
     public sealed class EtwSessionPropertiesFactory
     {

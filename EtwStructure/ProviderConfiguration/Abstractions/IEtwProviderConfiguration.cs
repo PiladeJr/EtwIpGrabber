@@ -14,8 +14,11 @@
     ///   <item><description>persistenza.</description></item>
     /// </list>
     /// L'abilitazione avviene a livello di sessione ETW e non interferisce con
-    /// altri consumer presenti nel sistema (es. Windows Defender), poiché i
-    /// manifest provider sono session-scoped.
+    /// altri consumer presenti nel sistema (es. Windows Defender).
+    /// <br/>
+    /// I manifest providers sono registrati globalmente nel sistema,
+    /// ma lo stato di abilitazione (Level/Keywords) è mantenuto
+    /// per-sessione dal sottosistema ETW.
     /// </remarks>
     public interface IEtwProviderConfigurator
     {

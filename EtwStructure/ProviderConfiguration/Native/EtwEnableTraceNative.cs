@@ -58,6 +58,15 @@ namespace EtwIpGrabber.EtwStructure.ProviderConfiguration.Native
     /// <list type="bullet">
     ///   <item><description><c>Microsoft-Windows-TCPIP</c> sulla sessione ETW creata dal SessionController.</description></item>
     /// </list>
+    /// <br/>
+    /// ETW mantiene uno stato di enablement indipendente per ogni sessione.
+    /// 
+    /// Se più sessioni abilitano lo stesso provider,
+    /// ETW esegue un merge dei Level/Keyword richiesti
+    /// e dispatcha gli eventi a tutti i consumer interessati.
+    /// 
+    /// Questo comportamento evita interferenze tra
+    /// tracing session parallele.
     /// </remarks>
     internal static class EtwEnableTraceNative
     {

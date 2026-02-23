@@ -6,6 +6,15 @@
     /// Controlla parametri come BufferSizeKb, MinimumBuffers, MaximumBuffers e SessionName
     /// per assicurarsi che rispettino i requisiti minimi e siano coerenti tra loro.
     /// </summary>
+    /// <remarks>
+    /// Questa validazione previene:
+    /// <list type="bullet">
+    ///   <item><description>StartTrace fallimenti runtime;</description></item>
+    ///   <item><description>perdita di eventi sotto burst TCP;</description></item>
+    ///   <item><description>allocazioni kernel insufficienti
+    ///   per provider ad alto throughput.</description></item>
+    /// </list>
+    /// </remarks>
     public static class EtwSessionConfigValidator
     {
         public static void Validate(IEtwSessionConfig config)

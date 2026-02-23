@@ -1,5 +1,4 @@
 ﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 
 namespace EtwIpGrabber.EtwStructure.EventDispatcher
 {

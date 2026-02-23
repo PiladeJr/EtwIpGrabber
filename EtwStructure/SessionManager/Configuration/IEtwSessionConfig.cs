@@ -55,9 +55,24 @@
         /// </remarks>
         bool RealTimeMode { get; }
         /// <summary>
-        /// Indica se la sessione ETW è configurata per operare in modalità System Logger, che consente
-        /// di scrivere eventi direttamente nel log del sistema, rendendoli accessibili tramite strumenti come Event Viewer.
+        /// Indica se la sessione ETW deve essere collegata al
+        /// global kernel logger context (SystemTraceProvider).
         /// </summary>
+        /// <remarks>
+        /// Quando abilitato:
+        /// <list type="bullet">
+        ///   <item><description>la sessione utilizza l'unica istanza globale del kernel logger;</description></item>
+        ///   <item><description>viene condivisa con strumenti di sistema (es. WPR, netsh trace);</description></item>
+        ///   <item><description>può interferire con altri consumer kernel-level.</description></item>
+        /// </list>
+        /// 
+        /// Questa modalità è richiesta esclusivamente per
+        /// provider kernel legacy abilitati tramite EnableFlags.
+        /// 
+        /// Per provider manifest-based (es. Microsoft-Windows-TCPIP)
+        /// deve restare disabilitata per evitare conflitti con
+        /// sessioni di sistema esistenti.
+        /// </remarks>
         bool SystemLoggerMode { get; }
         /// <summary>
         /// Rappresenta la bitmask combinata delle modalità di registrazione configurate per la sessione ETW nativa.

@@ -57,5 +57,4 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
         [DllImport("advapi32.dll")]
         public static extern uint CloseTrace(ulong traceHandle);
     }
-
 }

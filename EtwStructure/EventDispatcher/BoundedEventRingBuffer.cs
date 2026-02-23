@@ -1,9 +1,24 @@
 ﻿using EtwIpGrabber.EtwStructure.MetricsAndHealth;
 using EtwIpGrabber.EtwStructure.RealTimeConsumer;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 
 namespace EtwIpGrabber.EtwStructure.EventDispatcher
 {
+    /// <summary>
+    /// Fornisce un bounded ring buffer per salvare record di eventi. Permette operazioni di enqueue e dequeue in tempo costante, con gestione della concorrenza e tracking degli eventi scartati.
+    /// </summary>
+    /// Questo buffer implementa un modello SPSC
+    /// (Single Producer / Single Consumer):
+    /// <list type="bullet">
+    ///   <item><description>Producer: thread ETW (ProcessTrace);</description></item>
+    ///   <item><description>Consumer: reconstruction pipeline.</description></item>
+    /// </list>
+    /// 
+    /// L'assenza di sincronizzazione completa su _readIndex
+    /// è sicura solo in questo modello.
+    /// L'uso in scenari MPMC richiederebbe barriere di memoria
+    /// aggiuntive o atomic CAS.
+    /// <param name="capacity">il massimo numero di record che il buffer può contenere.</param>
+    /// <param name="metrics">Un'istanza di IMetricsCollector usata per tracciare le metriche relative al processing di eventi. quali il numero di eventi droppati.</param>
     public unsafe sealed class BoundedEventRingBuffer(
         int capacity,
         IMetricsCollector metrics) : IEventDispatcher

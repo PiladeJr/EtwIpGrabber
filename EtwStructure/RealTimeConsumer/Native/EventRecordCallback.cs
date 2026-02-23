@@ -12,7 +12,10 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
     /// Deve essere minima e non-bloccante:
     /// <list type="bullet">
     ///   <item><description>non effettuare parsing TDH;</description></item>
-    ///   <item><description>non allocare memoria managed;</description></item>
+    ///   <item><description>
+    ///   evitare operazioni di lunga durata o blocchi;
+    ///   allocazioni managed sono consentite purché non introducano
+    ///   latenza significativa nella callback.</description></item>
     ///   <item><description>non effettuare I/O;</description></item>
     ///   <item><description>non eseguire operazioni di lunga durata.</description></item>
     /// </list>

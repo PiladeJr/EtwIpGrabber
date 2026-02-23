@@ -1,17 +1,23 @@
 ﻿# EtwSessionController
 
 ## 🎯 Scopo della classe
-`EtwSessionController` è il componente responsabile del lifecycle completo di una ETW realtime session utilizzata per la raccolta di eventi TCP/IP dal kernel Windows.
-
+`EtwSessionController` è il componente responsabile del lifecycle completo di una ETW realtime session utilizzata per la raccolta di eventi TCP/IP dal provider manifest based.
+`Microsoft-Windows-TCPIP`.
 Gestisce:
 - Creazione sessione ETW
 - Attach a sessione esistente (post crash)
-- Stop deterministico
-- Recovery-safe restart
-- Handle kernel-level logger
+- Stop deterministico della sessione
+- Recovery-safe restart via SCM
+- Gestione dell'handle kernel (`TRACEHANDLE`)
 
-Questa classe rappresenta il confine tra user-mode .NET e il Kernel Logger Context ETW.
-
+Questa classe rappresenta il confine tra:
+```text
+User-mode (.NET Service)
+↓
+ETW Session Manager
+↓
+Kernel ETW Runtime
+```
 
 La classe ha una sola responsabilabilità.
 Gestire la creazione, il recupero e la chiusura di una ETW Session in modo crash-safe.
@@ -48,11 +54,13 @@ Restituito da:
 Oppure recuperato via:
 - `ControlTrace(EVENT_TRACE_CONTROL_QUERY)`
 
-Rappresenta:
-- Kernel Logger Context
+Rappresenta l'ETW Logger Context
 
-Se perso è impossibile stoppare la sessione
-
+Se perso:
+- la sessione non può essere stoppata
+- la sessione rimane attiva nel kernel
+- StartTrace() successivi restituiscono:
+`ERROR_ALREADY_EXISTS`
 ### 🔹 `_factory`
 ```c#
 private readonly EtwSessionPropertiesFactory _factory;
@@ -62,7 +70,7 @@ Responsabile di creare:
 - `EVENT_TRACE_PROPERTIES*`
 
 In formato ABI-safe richiesto da ETW:
-- `[ struct ][ wchar sessionName ]`
+- `[ EVENT_TRACE_PROPERTIES ][ wchar sessionName ]`
 
 In un unico blocco contiguo.
 
@@ -87,7 +95,7 @@ public ulong SessionHandle => _handle.Handle;
 Handle kernel della sessione ETW attiva.
 
 Necessario per:
-- `OpenTrace()` nel realtime consumer.
+- `EnableTraceEx2()` durante l'abilitazione del provider TCPIP.
 
 ### `SessionName`
 ```c#
@@ -96,8 +104,7 @@ public string SessionName => _config.SessionName;
 
 Nome della sessione registrata nel kernel ETW namespace.
 
-Usato per:
-- Attach post-crash
+Usato da `OpenTrace()` nel real time consumer per collegarsi alla sessione.
 
 ### `IsRunning`
 ```c#
@@ -120,9 +127,9 @@ Workflow:
 5. recupero `HistoricalContext`
 
 Questo consente:
-- ✔ recovery post crash
-- ✔ restart SCM safe
-- ✔ no duplicate session
+- recovery post crash
+- restart SCM safe
+- no duplicate session
 
 ### 🔗 `Attach()`
 Usato quando:
@@ -138,7 +145,8 @@ Che rappresenta il:
 - `TRACEHANDLE` della sessione esistente.
 
 Questo è fondamentale per:
-- `Stop()` successivo.
+- abilitare il provider TCPIP sulla sessione esistente
+- Consentire lo `Stop()` successivo.
 
 ### ⏹ `Stop()`
 Responsabile della chiusura deterministica della sessione ETW.
@@ -164,9 +172,9 @@ Invoca:
 Durante lo shutdown del Windows Service.
 
 Questo garantisce:
-- ✔ rilascio del Kernel Logger
-- ✔ no orphan session
-- ✔ possibilità di restart
+- rilascio dell' ETW Session
+- no orphan session
+- possibilità di restart del servizio
 
 ## 🧨 Failure modes gestiti
 | Scenario | Behaviour |

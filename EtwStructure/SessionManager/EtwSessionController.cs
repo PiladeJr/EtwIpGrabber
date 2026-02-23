@@ -58,14 +58,21 @@ namespace EtwIpGrabber.EtwStructure.SessionManager
         /// Avvia una nuova sessione ETW oppure si attacca a una esistente in caso di crash o restart.
         /// </summary>
         /// <remarks>
-        /// Il metodo avvia una sessione ETW con le proprietà specificate nella configurazione.
-        /// Se la sessione esiste già, richiama il metodo <see cref="Attach(nint)"/> per recuperare l'handle e usarlo
-        /// per recuperare l'historical context.<br/>
-        /// L'invocazione di <see cref="StartOrAttach"/> garantisce:
+        /// Se la sessione esiste già (es. dopo crash del servizio),
+        /// ETW restituisce ERROR_ALREADY_EXISTS.
+        /// 
+        /// In questo caso viene eseguito un attach tramite:
         /// <list type="bullet">
-        ///   <item><description>recovery post crash;</description></item>
-        ///   <item><description>restart SCM safe</description></item>
-        ///   <item><description>nessuna sessione duplicata</description></item>
+        ///   <item><description>ControlTrace(EVENT_TRACE_CONTROL_QUERY);</description></item>
+        ///   <item><description>lettura di Wnode.HistoricalContext;</description></item>
+        ///   <item><description>recovery del TRACEHANDLE kernel.</description></item>
+        /// </list>
+        /// 
+        /// Questo pattern consente:
+        /// <list type="bullet">
+        ///   <item><description>restart SCM-safe;</description></item>
+        ///   <item><description>crash recovery;</description></item>
+        ///   <item><description>assenza di duplicazione sessioni ETW.</description></item>
         /// </list>
         /// </remarks>
         public void StartOrAttach()
@@ -127,9 +134,12 @@ namespace EtwIpGrabber.EtwStructure.SessionManager
         }
 
         /// <summary>
-        /// Arresta la sessione ETW in modo deterministico e crash-safe.
+        /// Arresta la sessione ETW in modo deterministico e crash-safe. Impedendo la generazione di nuovi eventi
         /// </summary>
         /// <remarks>
+        /// Gli eventi già presenti nei buffer ETW
+        /// possono essere ancora dispatchati al consumer
+        /// fino alla terminazione di ProcessTrace().
         /// Il metodo gestisce:
         /// <list type="bullet">
         ///     <item><description>stop della sessione avvenuto con successo: Return code 0;</description></item>
@@ -178,16 +188,20 @@ namespace EtwIpGrabber.EtwStructure.SessionManager
             }
         }
         /// <summary>
-        /// Chiude la sessione ETW richiamando il metodo <see cref="Stop"/> per garantire
-        /// la terminazione corretta durante lo shutdown del servizio Windows.
+        /// Arresta la sessione ETW privata creata dal servizio.
         /// </summary>
         /// <remarks>
         /// L'invocazione di <see cref="Dispose"/> garantisce:
         /// <list type="bullet">
-        ///   <item><description>rilascio del kernel logger;</description></item>
-        ///   <item><description>assenza di sessioni ETW orfane dopo lo shutdown del servizio;</description></item>
-        ///   <item><description>possibilità di riavviare il servizio senza strumenti esterni per terminare sessioni ETW residue.</description></item>
+        ///   <item><description>terminazione della realtime tracing session;</description></item>
+        ///   <item><description>assenza di sessioni ETW private orfane dopo shutdown;</description></item>
+        ///   <item><description>possibilità di riavvio del servizio senza cleanup manuale.</description></item>
         /// </list>
+        /// 
+        /// Questa operazione non interagisce con il global
+        /// NT Kernel Logger (SystemTraceProvider)
+        /// e non impatta altri consumer di sistema
+        /// (es. Windows Defender, WPR, netsh trace).
         /// </remarks>
         public void Dispose()
         {

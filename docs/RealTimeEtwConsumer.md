@@ -8,7 +8,8 @@ Abilitato sulla sessione ETW tramite il `TcpIpProviderConfigurator`.
 
 Questo componente rappresenta il punto di ingresso della pipeline di raccolta degli eventi TCP lifecycle e consente di:
 - collegarsi a una sessione ETW attiva
-- ricevere eventi in streaming
+- ricevere eventi in streaming dal kernel
+- eseguire snapshot degli eventi ricevuti
 - inoltrare gli eventi alla pipeline interna
 - disaccoppiare il thread ETW dal motore di ricostruzione TCP
 
@@ -32,6 +33,8 @@ ProcessTrace()           → loop di ricezione eventi
     ↓
 EventRecordCallback()    → consegna eventi
     ↓
+Snapshot Copy
+    ↓
 Dispatcher.TryEnqueue()  → staging buffer
 ```
 
@@ -49,14 +52,23 @@ Qualsiasi operazione bloccante eseguita in questo contesto può causare:
 - perdita di eventi TCP lifecycle
 - degradazione della detection accuracy
 
-Pertanto, la callback deve limitarsi a:
-- inoltrare il puntatore `EVENT_RECORD` alla coda di staging
+Pertanto, la callback deve limitarsi a copiare i seguenti campi:
+- `EVENT_HEADER` 
+- `UserData`
+- `ExtendedData`
+in una memoria gestita (staging buffer).
 
-Senza:
-- parsing TDH
-- allocazioni dinamiche
-- I/O sincrono
-- lookup di processo
+il puntatore `EVENT_RECORD` è valido solo durante l'esecuzione delle callback. dopo il return:
+- il buffer può essere riutilizzato da ETW
+- il contenuto può essere sovrascritto
+- i puntatori diventano dangling
+
+Il mancato snapshot del payload può causare:
+
+- heap corruption
+- AccessViolationException
+- crash in ProcessTrace()
+- Errori nei winlog 0xC0000374 / 0xC0000409
 
 ## 📦 Componenti del modulo
 ### `IRealtimeEtwConsumer`
@@ -95,22 +107,20 @@ Per evitare invalidazione da parte del Garbage Collector.
 ### `IEventDispatcher`
 Definisce il contratto per l'inoltro degli eventi dalla callback ETW al resto della pipeline.
 
-Il dispatcher funge da:
-- staging buffer
-
-Tra:
+Il dispatcher funge da staging buffer tra:
 - il thread ETW (producer)
 - il motore di ricostruzione TCP (consumer)
 
-### `LockFreeEventDispatcher`
-Implementazione base del dispatcher che utilizza una `ConcurrentQueue` per accodare i puntatori agli eventi.
+### `BoundedEventRingBuffer`
+Implementazione del dispatcher basata su ring buffer a capacità fissa.
 
-In questa fase:
-- non viene effettuato parsing
-- non viene applicato filtraggio
-- non viene copiato il payload
-
-Il dispatcher sarà successivamente sostituito con una struttura lock-free a dimensione fissa per gestire backpressure sotto carico elevato.
+Fornisce:
+- enqueue non bloccante lato producer
+- backpressure controllata
+- prevenzione crescita non limitata della memoria
+- contatori di:
+    - eventi ricevuti
+    - eventi persi (`Dropped`)
 
 ## 🧩 Strutture native utilizzate
 Il corretto funzionamento di `OpenTrace()` e `ProcessTrace()` richiede la definizione di una serie di strutture native ETW:
@@ -122,9 +132,10 @@ Il corretto funzionamento di `OpenTrace()` e `ProcessTrace()` richiede la defini
 - `TRACE_LOGFILE_HEADER`
 
 Queste strutture:
-- definiscono il layout ABI atteso dal kernel
+- definiscono il layout ABI atteso dal kernel ETW a runtime
 - contengono metadati relativi agli eventi
-- permettono il parsing TDH del payload
+- permettono la consegna di eventi compatibili con TDH
+- garantiscono l’allineamento interno di `EVENT_TRACE_LOGFILE`
 
 Anche se alcune di esse (es. `EVENT_TRACE`) non vengono utilizzate direttamente in modalità `PROCESS_TRACE_MODE_EVENT_RECORD`, devono comunque essere definite per garantire il corretto layout della struttura `EVENT_TRACE_LOGFILE`.
 
@@ -137,6 +148,12 @@ EtwSessionController.StartOrAttach()
 TcpIpProviderConfigurator.EnableProvider()
     ↓
 RealtimeEtwConsumer.Start()
+    ↓
+ProcessTrace()
+    ↓
+EventRecordCallback()
+    ↓
+Snapshot Copy
     ↓
 Dispatcher.TryEnqueue()
 ```

@@ -35,6 +35,21 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// <summary>
         /// Inizializza una nuova istanza di <see cref="RealtimeEtwConsumer"/>.
         /// </summary>
+        /// <remarks>
+        /// <b>Attenzione:</b>
+        /// EVENT_TRACE_LOGFILE deve rimanere allocato per tutta
+        /// la durata di ProcessTrace().
+        /// 
+        /// ETW non effettua una copia della struttura ma mantiene
+        /// il puntatore interno per il dispatch degli eventi.
+        /// 
+        /// Il rilascio anticipato della memoria causa:
+        /// <list type="bullet">
+        ///   <item><description>heap corruption;</description></item>
+        ///   <item><description>AccessViolationException;</description></item>
+        ///   <item><description>terminazione del processo in ntdll.dll.</description></item>
+        /// </list> 
+        /// </remarks>
         /// <param name="dispatcher">Dispatcher per l'accodamento degli eventi ETW.</param>
         public RealtimeEtwConsumer(IEventDispatcher dispatcher, ILogger<RealtimeEtwConsumer> logger)
         {

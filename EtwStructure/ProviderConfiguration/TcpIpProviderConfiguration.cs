@@ -10,7 +10,7 @@ namespace EtwIpGrabber.EtwStructure.ProviderConfiguration
     /// Questo componente abilita il provider sulla sessione ETW tramite
     /// <c>EnableTraceEx2</c>, specificando Level, Keywords e parametri avanzati
     /// di enablement.
-    ///
+    /// <br/>
     /// L'utilizzo di <c>EVENT_ENABLE_PROPERTY_PROCESS_START_KEY</c> consente al
     /// kernel di arricchire gli eventi con una Process Start Key univoca,
     /// mitigando il rischio di PID reuse durante la ricostruzione del
@@ -21,6 +21,15 @@ namespace EtwIpGrabber.EtwStructure.ProviderConfiguration
     ///   <item><description>correlazione PID → Processo;</description></item>
     ///   <item><description>detection accuracy;</description></item>
     ///   <item><description>calcolo corretto del Community ID associato a processi.</description></item>
+    /// </list>
+    /// L'invocazione richiede l'enablement del provider
+    /// ma non garantisce l'immediata emissione di eventi:
+    /// 
+    /// il dispatch avverrà solo dopo che:
+    /// <list type="bullet">
+    ///   <item><description>la sessione ETW è attiva;</description></item>
+    ///   <item><description>un consumer ha eseguito OpenTrace();</description></item>
+    ///   <item><description>ProcessTrace() è in esecuzione.</description></item>
     /// </list>
     /// </remarks>
     public sealed class TcpIpProviderConfigurator : IEtwProviderConfigurator
