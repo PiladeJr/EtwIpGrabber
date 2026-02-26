@@ -22,6 +22,7 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
     public unsafe struct EventRecordSnapshot
     {
         public EVENT_HEADER Header;
+        public ETW_BUFFER_CONTEXT BufferContext;
         public ushort ExtendedDataCount;
         public ushort UserDataLength;
         public byte[] UserData;

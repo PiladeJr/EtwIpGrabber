@@ -1,3 +1,4 @@
+using EtwIpGrabber.EtwStructure;
 using EtwIpGrabber.EtwStructure.EventDispatcher;
 using EtwIpGrabber.EtwStructure.MetricsAndHealth;
 using EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions;

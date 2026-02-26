@@ -22,4 +22,16 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
         public ushort DataSize;
         public ulong DataPtr;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct TDH_EVENT_RECORD
+    {
+        public EVENT_HEADER EventHeader;
+        public ETW_BUFFER_CONTEXT BufferContext;
+        public ushort ExtendedDataCount;
+        public ushort UserDataLength;
+        public EVENT_HEADER_EXTENDED_DATA_ITEM* ExtendedData;
+        public void* UserData;
+        public void* UserContext;
+    }
 }

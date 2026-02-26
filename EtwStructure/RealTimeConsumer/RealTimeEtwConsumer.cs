@@ -2,7 +2,6 @@
 using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native;
 using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 using System.Runtime.InteropServices;
-using TraceReloggerLib;
 
 namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
 {
@@ -151,6 +150,7 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
                 ExtendedDataCount = record->ExtendedDataCount,
                 UserDataLength = record->UserDataLength,
                 UserData = new byte[record->UserDataLength],
+                BufferContext = record->BufferContext,
                 ExtendedData =
                     new byte[
                         record->ExtendedDataCount *

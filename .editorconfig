@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# SYSLIB1054: Usare 'LibraryImportAttribute' invece di 'DllImportAttribute' per generare codice di marshalling di P/Invoke in fase di compilazione
+dotnet_diagnostic.SYSLIB1054.severity = none
+
+# CA1711: Gli identificatori non devono includere un suffisso errato
+dotnet_diagnostic.CA1711.severity = none
