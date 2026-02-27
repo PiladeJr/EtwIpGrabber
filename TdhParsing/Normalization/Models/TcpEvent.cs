@@ -1,5 +1,17 @@
 ﻿namespace EtwIpGrabber.TdhParsing.Normalization.Models
 {
+    /// <summary>
+    /// Evento TCP normalizzato pronto
+    /// per le fasi successive di:
+    /// 
+    /// - Lifecycle Reconstruction
+    /// - Community-ID Generation
+    /// - Persistenza
+    /// 
+    /// Tutti i valori sono:
+    /// - convertiti in host byte order
+    /// - semanticamente interpretabili
+    /// </summary>
     public sealed class TcpEvent
     {
         public DateTime TimestampUtc { get; set; }

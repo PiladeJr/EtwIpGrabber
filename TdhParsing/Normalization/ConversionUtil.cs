@@ -5,8 +5,31 @@ using System.Runtime.CompilerServices;
 
 namespace EtwIpGrabber.TdhParsing.Normalization
 {
+    /// <summary>
+    /// Utility statica utilizzata nella fase di normalizzazione del dato TCP.
+    /// 
+    /// Converte i valori ottenuti dal decoding TDH (RawTcpDecodedEvent)
+    /// in un formato semanticamente corretto e utilizzabile a livello applicativo.
+    ///
+    /// In particolare:
+    /// - Converte valori da network byte order (big-endian) a host order
+    /// - Effettua parsing e formattazione IPv4
+    /// - Traduce codici raw ETW (Direction, Flags, EventDescriptor)
+    ///   in enum di dominio
+    ///
+    /// Questa classe viene utilizzata esclusivamente da:
+    /// <see cref="TcpEventNormalizer"/>
+    /// </summary>
     public static class ConversionUtil
     {
+        /// <summary>
+        /// Converte una porta TCP da network byte order (big-endian)
+        /// a host byte order.
+        /// </summary>
+        /// <remarks>
+        /// I campi provenienti dal payload ETW sono serializzati in network order.
+        /// Questa funzione applica manualmente lo swap dei byte.
+        /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort Ntohs(ushort value)
         {
@@ -15,6 +38,10 @@ namespace EtwIpGrabber.TdhParsing.Normalization
                 (value << 8));
         }
 
+        /// <summary>
+        /// Converte un indirizzo IPv4 da network byte order
+        /// a host byte order.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static uint Ntohl(uint value)
         {
@@ -24,10 +51,20 @@ namespace EtwIpGrabber.TdhParsing.Normalization
                 ((value << 8) & 0x00FF0000) |
                 (value << 24);
         }
+
+        /// <summary>
+        /// Converte il timestamp ETW (FILETIME)
+        /// in formato UTC .NET.
+        /// </summary>
         public static DateTime ConvertTimestamp(long timestamp)
         {
             return DateTime.FromFileTimeUtc(timestamp);
         }
+
+        /// <summary>
+        /// Traduce il valore raw della proprietà Direction
+        /// nell'enum di dominio <see cref="TcpDirection"/>.
+        /// </summary>
         public static TcpDirection DecodeDirection(byte raw)
         {
             return raw switch
@@ -37,11 +74,20 @@ namespace EtwIpGrabber.TdhParsing.Normalization
                 _ => TcpDirection.Unknown
             };
         }
+
+        /// <summary>
+        /// Converte il byte raw dei flag TCP
+        /// nell'enum <see cref="TcpFlags"/>.
+        /// </summary>
         public static TcpFlags DecodeFlags(byte raw)
         {
             return (TcpFlags)raw;
         }
 
+        /// <summary>
+        /// Mappa l'EventDescriptor ETW
+        /// in un tipo evento TCP semanticamente significativo.
+        /// </summary>
         public static TcpEventType MapEventType(in EVENT_DESCRIPTOR desc)
         {
             return desc.Id switch
@@ -55,10 +101,16 @@ namespace EtwIpGrabber.TdhParsing.Normalization
             };
         }
 
+        /// <summary>
+        /// Effettua il parsing di una stringa IPv4
+        /// nel corrispondente valore UInt32.
+        /// </summary>
+        /// <remarks>
+        /// Utilizzato durante il decoding TDH per convertire
+        /// le proprietà string-based in formato numerico.
+        /// </remarks>
         public static uint ParseIPv4(string value)
         {
-            Span<byte> bytes = stackalloc byte[4];
-
             if (!System.Net.IPAddress.TryParse(value, out var ip))
                 return 0;
 
@@ -74,7 +126,10 @@ namespace EtwIpGrabber.TdhParsing.Normalization
                 addr[3];
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        /// <summary>
+        /// Converte un indirizzo IPv4 UInt32
+        /// in rappresentazione dotted-decimal.
+        /// </summary>
         public static string FormatIPv4(uint ip)
         {
             return $"{ip & 0xFF}." +
