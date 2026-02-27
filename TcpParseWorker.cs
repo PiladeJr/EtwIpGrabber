@@ -10,8 +10,7 @@ namespace EtwIpGrabber
         ILogger<TcpParseWorker> logger)
         : BackgroundService
     {
-        protected override async Task ExecuteAsync(
-            CancellationToken stoppingToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
