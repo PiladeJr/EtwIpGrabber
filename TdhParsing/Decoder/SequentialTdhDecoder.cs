@@ -8,8 +8,79 @@ using System.Runtime.InteropServices;
 
 namespace EtwIpGrabber.TdhParsing.Decoder
 {
+    /// <summary>
+    /// Implementa il decoding sequenziale del payload binario
+    /// di un evento TCPIP ETW manifest-based.
+    ///
+    /// <para>
+    /// Rappresenta il terzo step della pipeline TDH:
+    /// </para>
+    /// <code>
+    /// TDH_EVENT_RECORD + TRACE_EVENT_INFO + TcpEventLayout
+    ///     ↓
+    /// Sequential Payload Walk
+    ///     ↓
+    /// RawTcpDecodedEvent
+    /// </code>
+    ///
+    /// <para>
+    /// Questa classe è responsabile di:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>Interpretare il payload binario ETW (<c>UserData</c>)</item>
+    /// <item>Applicare il layout runtime version-aware</item>
+    /// <item>Effettuare il property walk sequenziale</item>
+    /// <item>Avanzare l'offset tramite <c>UserDataConsumed</c></item>
+    /// <item>Filtrare eventi non IPv4</item>
+    /// </list>
+    ///
+    /// Il decoding avviene tramite la chiamata all'api nativa <c>TdhFormatProperty</c>
+    /// Che utilizza il metadata TDH per:
+    /// <list type="bullet">
+    /// <item>Interpretare il payload runtime</item>
+    /// <item>Applicare eventuali mappe di conversione</item>
+    /// <item>Restituire la dimensione effettiva consumata</item>
+    /// </list>
+    ///
+    /// <para><b> IMPORTANTE: </b></para>
+    /// <list type="bullet">
+    /// <item>Il payload ETW è binario e non self-describing</item>
+    /// <item>L'offset deve essere avanzato correttamente</item>
+    /// <item>Se la chiamata a TdhFormatProperty genera ERROR_INVALID_PARAMETER (87) è presente un type mismatch con i parametri passati alla chiamata</item>
+    /// </list>
+    /// </summary>
     internal unsafe sealed class SequentialTdhDecoder : ITdhDecoder
     {
+        /// <summary>
+        /// Effettua il decoding sequenziale del payload evento
+        /// utilizzando il metadata TDH e il layout runtime.
+        ///
+        /// <para>
+        /// Per ogni proprietà definita nel manifest:
+        /// </para>
+        /// <list type="number">
+        /// <item>Invoca TdhFormatProperty</item>
+        /// <item>Ottiene il valore formattato</item>
+        /// <item>Recupera i byte consumati</item>
+        /// <item>Avanza l'offset payload</item>
+        /// </list>
+        ///
+        /// <para>
+        /// Il binding runtime:
+        /// </para>
+        /// <code>
+        /// PropertyIndex → TcpEventLayout → RawTcpDecodedEvent
+        /// </code>
+        ///
+        /// <para>
+        /// Permette di:
+        /// </para>
+        /// <list type="bullet">
+        /// <item>Estrarre IPv4</item>
+        /// <item>Filtrare AF_INET</item>
+        /// <item>Popolare il risultato grezzo</item>
+        /// </list>
+        /// </summary>
         public bool TryDecode(
             TDH_EVENT_RECORD* record,
             TRACE_EVENT_INFO* info,
@@ -27,17 +98,8 @@ namespace EtwIpGrabber.TdhParsing.Decoder
             int propertyCount =
                 (int)info->PropertyCount;
 
-            int headerSize =
-                sizeof(TRACE_EVENT_INFO);
-
-            int alignedHeader =
-                (headerSize + 7) & ~7;
-
             var propArray =
-                (EVENT_PROPERTY_INFO*)
-                ((byte*)info +
-                 alignedHeader);
-            var pointerSize = CalculatePointerSize(record);
+                GetPropertyArray(info);
 
             int offset = 0;
 
@@ -52,13 +114,16 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
                 ushort consumed = 0;
                 uint bufferSize = 128;
-                bool useMap = true;
 
                 char* stackBuffer = stackalloc char[128];
                 char* buffer = stackBuffer;
 
                 IntPtr heapBuffer = IntPtr.Zero;
 
+                //================================================================//
+                // Tenta a formattare la proprietà, se il buffer è insufficiente, //
+                // aumenta la dimensione del buffer e riprova                     //
+                //================================================================//
                 while (true)
                 {
                     var status = TdhNativeMethods.TdhFormatProperty(
@@ -67,7 +132,7 @@ namespace EtwIpGrabber.TdhParsing.Decoder
                             (uint)IntPtr.Size,
                             prop->NonStructType.InType,
                             prop->NonStructType.OutType,
-                            prop->Length,
+                            propLength,
                             userDataLength,
                             userData + offset,
                             &bufferSize,
@@ -97,37 +162,8 @@ namespace EtwIpGrabber.TdhParsing.Decoder
                 if (heapBuffer != IntPtr.Zero)
                     Marshal.FreeHGlobal(heapBuffer);
 
-                switch (i)
-                {
-                    case var _ when i == layout.AddressFamilyIndex:
-                        if (!ushort.TryParse(value, out decoded.AddressFamily))
-                            return false;
-
-                        if (decoded.AddressFamily != 2)
-                            return false;
-                        break;
-
-                    case var _ when i == layout.LocalAddressIndex:
-                        decoded.LocalAddress =
-                            ConversionUtil.ParseIPv4(value);
-                        decoded.IsIpv4 = true;
-                        break;
-
-                    case var _ when i == layout.RemoteAddressIndex:
-                        decoded.RemoteAddress =
-                            ConversionUtil.ParseIPv4(value);
-                        break;
-
-                    case var _ when i == layout.LocalPortIndex:
-                        if (!ushort.TryParse(value, out decoded.LocalPort))
-                            return false;
-                        break;
-
-                    case var _ when i == layout.RemotePortIndex:
-                        if (!ushort.TryParse(value, out decoded.RemotePort))
-                            return false;
-                        break;
-                }
+                if (!BindDecodedField(value, layout, i, ref decoded))
+                    return false;
 
                 offset += consumed;
             }
@@ -137,14 +173,97 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
             return true;
         }
-
-        private static uint CalculatePointerSize(TDH_EVENT_RECORD* record)
+        /// <summary>
+        /// Recupera l'array runtime di proprietà <see cref="EVENT_PROPERTY_INFO"/>
+        /// associato all'evento.
+        ///
+        /// <para>
+        /// TRACE_EVENT_INFO è seguito in memoria da:
+        /// </para>
+        /// <code>
+        /// EVENT_PROPERTY_INFO[PropertyCount]
+        /// </code>
+        ///
+        /// <para>
+        /// L'header deve essere allineato a 8 byte prima di accedere all'array.
+        /// </para>
+        ///
+        /// <para>
+        /// Un offset errato comporta:
+        /// </para>
+        /// <list type="bullet">
+        /// <item>ERROR_INVALID_PARAMETER</item>
+        /// <item>Decode fallito</item>
+        /// </list>
+        /// </summary>
+        private static EVENT_PROPERTY_INFO* GetPropertyArray(TRACE_EVENT_INFO* info)
         {
-             uint pointerSize =
-                (record->EventHeader.Flags & 0x20) != 0
-                    ? 4u
-                    : 8u;
-            return pointerSize;
+            int headerSize = sizeof(TRACE_EVENT_INFO);
+            int alignedHeader = (headerSize + 7) & ~7;
+
+            return (EVENT_PROPERTY_INFO*)
+                ((byte*)info + alignedHeader);
+        }
+        /// <summary>
+        /// Effettua il binding tra una proprietà runtime e il relativo campo TCP/IP.
+        ///
+        /// <para>
+        /// Utilizza gli indici precedentemente costruiti nel <see cref="TcpEventLayout"/>
+        /// per associare:
+        /// </para>
+        /// <code>
+        /// PropertyIndex → Tcp Field
+        /// </code>
+        ///
+        /// <para>
+        /// Il campo AddressFamily viene utilizzato
+        /// per filtrare eventi IPv6.
+        /// </para>
+        ///
+        /// <para>
+        /// AF_INET (2) ⇒ IPv4 valido
+        /// </para>
+        /// </summary>
+        private static bool BindDecodedField(
+            string value,
+            TcpEventLayout layout,
+            int index,
+            ref RawTcpDecodedEvent decoded)
+        {
+            switch (index)
+            {
+                case var _ when index == layout.AddressFamilyIndex:
+                    if (!ushort.TryParse(value, out decoded.AddressFamily))
+                        return false;
+
+                    // se diverso da AF_INET (2), ovvero un evento non IPv4, scarta l'evento
+                    if (decoded.AddressFamily != 2)
+                        return false;
+                    break;
+
+                case var _ when index == layout.LocalAddressIndex:
+                    decoded.LocalAddress =
+                        ConversionUtil.ParseIPv4(value);
+
+                    decoded.IsIpv4 = true;
+                    break;
+
+                case var _ when index == layout.RemoteAddressIndex:
+                    decoded.RemoteAddress = ConversionUtil.ParseIPv4(value);
+                    break;
+
+                case var _ when index == layout.LocalPortIndex:
+                    if (!ushort.TryParse(value, out decoded.LocalPort))
+                        return false;
+                    break;
+
+                case var _ when index == layout.RemotePortIndex:
+                    if (!ushort.TryParse(value, out decoded.RemotePort))
+                        return false;
+                    break;
+            }
+
+            return true;
         }
     }
 }
