@@ -24,11 +24,21 @@ namespace EtwIpGrabber
                     continue;
 
                 logger.LogInformation(
-                    "TCP {Local}:{LPort} -> {Remote}:{RPort}",
+                @"TCP {EventType}
+                {Local}:{LPort} → {Remote}:{RPort}
+                ProcessId: {Pid}
+                Direction: {Dir}
+                Flags: {Flags}
+                TimestampUtc: {Ts:O}",
+                    tcp.EventType,
                     ConversionUtil.FormatIPv4(tcp.LocalIP),
                     tcp.LocalPort,
                     ConversionUtil.FormatIPv4(tcp.RemoteIP),
-                    tcp.RemotePort);
+                    tcp.RemotePort,
+                    tcp.ProcessId,
+                    tcp.Direction,
+                    tcp.Flags,
+                    tcp.TimestampUtc);
             }
         }
     }
