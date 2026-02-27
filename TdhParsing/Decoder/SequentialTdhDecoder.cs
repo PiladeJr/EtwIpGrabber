@@ -103,14 +103,11 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
             int offset = 0;
 
+            TryParseProcessContext(record, ref decoded);
+
             for (int i = 0; i < propertyCount; i++)
             {
                 var prop = &propArray[i];
-
-                ushort propLength =
-                    (prop->Flags & (uint)PropertyFlags.PropertyParamFixedLength) != 0
-                        ? prop->Length
-                        : (ushort)0;
 
                 ushort consumed = 0;
                 uint bufferSize = 128;
@@ -132,7 +129,7 @@ namespace EtwIpGrabber.TdhParsing.Decoder
                             (uint)IntPtr.Size,
                             prop->NonStructType.InType,
                             prop->NonStructType.OutType,
-                            propLength,
+                            prop->Length,
                             userDataLength,
                             userData + offset,
                             &bufferSize,
@@ -264,6 +261,37 @@ namespace EtwIpGrabber.TdhParsing.Decoder
             }
 
             return true;
+        }
+
+        private static unsafe void TryParseProcessContext(
+            TDH_EVENT_RECORD* record,
+            ref RawTcpDecodedEvent decoded)
+        {
+            var ext = record->ExtendedData;
+
+            for (int i = 0; i < record->ExtendedDataCount; i++)
+            {
+                switch (ext[i].ExtType)
+                {
+                    // RELATED_ACTIVITY_ID
+                    case 0x01:
+                        {
+                            var data = (uint*)ext[i].DataPtr;
+
+                            decoded.ProcessId = data[0];
+                            return;
+                        }
+
+                    // NETWORK_CONNECTION (direction)
+                    case 0x0B:
+                        {
+                            var conn = (uint*)ext[i].DataPtr;
+
+                            decoded.Direction = (byte)conn[1];
+                            break;
+                        }
+                }
+            }
         }
     }
 }
