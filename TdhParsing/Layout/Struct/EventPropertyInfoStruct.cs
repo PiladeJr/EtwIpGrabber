@@ -2,6 +2,45 @@
 
 namespace EtwIpGrabber.TdhParsing.Layout.Struct
 {
+    /// <summary>
+    /// Descrive una singola proprietà appartenente al payload runtime
+    /// di un evento ETW manifest-based.
+    ///
+    /// <para>
+    /// Questa struttura non viene mai istanziata direttamente,
+    /// ma è parte di un array variabile immediatamente successivo
+    /// al buffer <see cref="TRACE_EVENT_INFO"/>.
+    /// </para>
+    ///
+    /// <para>
+    /// Ogni elemento rappresenta:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>Il tipo dati runtime (InType)</item>
+    /// <item>Il formato di output desiderato (OutType)</item>
+    /// <item>La presenza di mappe di conversione</item>
+    /// <item>Informazioni strutturali (array / nested struct)</item>
+    /// </list>
+    ///
+    /// <para>
+    /// Viene utilizzata durante il:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>Layout Discovery</item>
+    /// <item>Sequential Property Decoding</item>
+    /// </list>
+    /// ⚠️ IMPORTANTE:
+    /// <list type="bullet">
+    /// <item>Contiene union overlay</item>
+    /// <item>Il significato dei campi dipende dai Flags</item>
+    /// <item>Interpretazione errata ⇒ ERROR_INVALID_PARAMETER (87)</item>
+    /// </list>
+    ///
+    /// <remarks>
+    /// TDH Documentation:
+    /// <see href="https://learn.microsoft.com/it-it/windows/win32/api/tdh/ns-tdh-event_property_info"> EVENT_PROPERTY_INFO </see>
+    /// </remarks>
+    /// </summary>
     [StructLayout(LayoutKind.Explicit)]
     public struct EVENT_PROPERTY_INFO
     {
@@ -39,7 +78,10 @@ namespace EtwIpGrabber.TdhParsing.Layout.Struct
         [FieldOffset(20)]
         public uint Reserved;
     }
-
+    /// <summary>
+    /// Descrive una proprietà non strutturata (primitive type)
+    /// presente nel payload ETW runtime.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct PROPERTY_NON_STRUCT_TYPE
     {
@@ -47,7 +89,15 @@ namespace EtwIpGrabber.TdhParsing.Layout.Struct
         public ushort OutType;
         public uint MapNameOffset;
     }
-
+    /// <summary>
+    /// Descrive una proprietà composta (nested struct)
+    /// all'interno del payload ETW runtime.
+    /// </summary>
+    /// <remarks>
+    /// Permette a TDH di interpretare eventi contenenti
+    /// proprietà strutturate.
+    /// 
+    /// </remarks>>
     [StructLayout(LayoutKind.Sequential)]
     public struct PROPERTY_STRUCT_TYPE
     {
