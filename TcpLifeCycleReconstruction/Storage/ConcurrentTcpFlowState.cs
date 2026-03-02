@@ -16,16 +16,14 @@
             in TcpFlowKey key,
             in TcpEvent firstEvent)
         {
-            var k = key; // Avoid "cannot capture in ref struct" error
-            var fe = firstEvent; // Avoid "cannot capture in ref struct" error
-            return _flows.GetOrAdd(
-                key,
-                _ => new TcpFlowInstance(k, fe));
+            // assegnazioni necessarie solo per evitare errori di cattura di variabili
+            // nei lambda, nonostante i parametri siano in readonly struct
+            var k = key; 
+            var fe = firstEvent; 
+            return _flows.GetOrAdd( key, _ => new TcpFlowInstance(k, fe));
         }
 
-        public bool TryRemove(
-            in TcpFlowKey key,
-            out TcpFlowInstance? flow)
+        public bool TryRemove( in TcpFlowKey key, out TcpFlowInstance? flow)
         {
             return _flows.TryRemove(key, out flow);
         }
