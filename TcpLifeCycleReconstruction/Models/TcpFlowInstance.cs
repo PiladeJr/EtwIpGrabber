@@ -23,5 +23,41 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
             TcpEventType.Accept => TcpLifecycleState.Established,
             _ => TcpLifecycleState.New
         };
+        public bool Apply(in TcpEvent e)
+        {
+            LastSeenUtc = e.TimestampUtc;
+
+            switch (e.EventType)
+            {
+                case TcpEventType.Connect:
+                    SeenConnect = true;
+                    State = TcpLifecycleState.Connecting;
+                    break;
+
+                case TcpEventType.Accept:
+                    SeenAccept = true;
+                    State = TcpLifecycleState.Established;
+                    break;
+
+                case TcpEventType.Close:
+                    SeenClose = true;
+                    EndUtc = e.TimestampUtc;
+                    State = TcpLifecycleState.Closed;
+                    return true;
+
+                case TcpEventType.Disconnect:
+                    SeenDisconnect = true;
+                    EndUtc = e.TimestampUtc;
+                    State = TcpLifecycleState.Aborted;
+                    return true;
+
+                case TcpEventType.Retransmit:
+                    if (State == TcpLifecycleState.New)
+                        State = TcpLifecycleState.Connecting;
+                    break;
+            }
+
+            return false;
+        }
     }
 }
