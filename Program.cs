@@ -17,6 +17,7 @@ using EtwIpGrabber.TdhParsing.Layout;
 using EtwIpGrabber.TdhParsing.Metadata;
 using EtwIpGrabber.TdhParsing.Metadata.Abstract;
 using EtwIpGrabber.TdhParsing.Normalization;
+using EtwIpGrabber.Utils.ProcessNameResolver;
 using Microsoft.Extensions.Logging.EventLog;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -59,6 +60,7 @@ builder.Services.AddSingleton<ITdhDecoder, SequentialTdhDecoder>();
 builder.Services.AddSingleton<TcpEventNormalizer>();
 
 builder.Services.AddSingleton<ITcpEtwParser, TcpEtwParser>();
+builder.Services.AddSingleton<IProcessNameResolver, ProcessNameResolver>();
 
 //------------------ Workers ------------------
 builder.Services.AddHostedService<Worker>();

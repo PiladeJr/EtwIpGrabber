@@ -1,12 +1,14 @@
 ﻿using EtwIpGrabber.EtwStructure.EventDispatcher;
 using EtwIpGrabber.TdhParsing;
 using EtwIpGrabber.TdhParsing.Normalization;
+using EtwIpGrabber.Utils.ProcessNameResolver;
 
 namespace EtwIpGrabber
 {
     internal sealed class TcpParseWorker(
         BoundedEventRingBuffer buffer,
         ITcpEtwParser parser,
+        IProcessNameResolver processResolver,
         ILogger<TcpParseWorker> logger)
         : BackgroundService
     {
@@ -22,11 +24,12 @@ namespace EtwIpGrabber
 
                 if (!parser.TryParse(snapshot, out var tcp))
                     continue;
+                // _connectionStore.Track(in tcp);
 
                 logger.LogInformation(
                 @"TCP {EventType}
                 {Local}:{LPort} → {Remote}:{RPort}
-                ProcessId: {Pid}
+                Process: id = {Pid}; name = {PName}
                 Direction: {Dir}
                 Flags: {Flags}
                 TimestampUtc: {Ts:O}",
@@ -36,6 +39,7 @@ namespace EtwIpGrabber
                     ConversionUtil.FormatIPv4(tcp.RemoteIP),
                     tcp.RemotePort,
                     tcp.ProcessId,
+                    processResolver.Resolve(tcp.ProcessId),
                     tcp.Direction,
                     tcp.Flags,
                     tcp.TimestampUtc);

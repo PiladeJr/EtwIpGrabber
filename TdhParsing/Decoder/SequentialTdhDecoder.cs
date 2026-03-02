@@ -89,6 +89,7 @@ namespace EtwIpGrabber.TdhParsing.Decoder
         {
             decoded = default;
 
+            decoded.ProcessId = record->EventHeader.ProcessId;
             byte* userData =
                 (byte*)record->UserData;
 
@@ -103,7 +104,7 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
             int offset = 0;
 
-            TryParseProcessContext(record, ref decoded);
+            //TODO: Verifica se eliminare la seguente istruzione TryParseProcessContext(record, ref decoded);
 
             for (int i = 0; i < propertyCount; i++)
             {
@@ -262,7 +263,7 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
             return true;
         }
-
+        /* Codice inutilizzato per ora
         private static unsafe void TryParseProcessContext(
             TDH_EVENT_RECORD* record,
             ref RawTcpDecodedEvent decoded)
@@ -271,27 +272,13 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
             for (int i = 0; i < record->ExtendedDataCount; i++)
             {
-                switch (ext[i].ExtType)
-                {
-                    // RELATED_ACTIVITY_ID
-                    case 0x01:
-                        {
-                            var data = (uint*)ext[i].DataPtr;
+                if (ext[i].ExtType != 0x0B)
+                    continue;
 
-                            decoded.ProcessId = data[0];
-                            return;
-                        }
+                var info = (NetworkConnectionInfo*)ext[i].DataPtr;
 
-                    // NETWORK_CONNECTION (direction)
-                    case 0x0B:
-                        {
-                            var conn = (uint*)ext[i].DataPtr;
-
-                            decoded.Direction = (byte)conn[1];
-                            break;
-                        }
-                }
+                return;
             }
-        }
+        }*/
     }
 }
