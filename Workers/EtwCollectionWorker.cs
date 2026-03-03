@@ -5,16 +5,16 @@ using EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions;
 using EtwIpGrabber.EtwStructure.RealTimeConsumer;
 using EtwIpGrabber.EtwStructure.SessionManager.Abstraction;
 
-namespace EtwIpGrabber
+namespace EtwIpGrabber.Workers
 {
-    public class Worker(
-            ILogger<Worker> logger,
+    public class EtwCollectionWorker(
+            ILogger<EtwCollectionWorker> logger,
             IEtwSessionController session,
             IEtwProviderConfigurator provider,
             IRealtimeEtwConsumer consumer,
             EtwTelemetryMonitor monitor) : BackgroundService
     {
-        private readonly ILogger<Worker> _logger = logger;
+        private readonly ILogger<EtwCollectionWorker> _logger = logger;
         private readonly IEtwSessionController _session = session;
         private readonly IEtwProviderConfigurator _provider = provider;
         private readonly IRealtimeEtwConsumer _consumer = consumer;

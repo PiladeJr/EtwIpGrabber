@@ -1,13 +1,14 @@
 ﻿using EtwIpGrabber.EtwStructure.EventDispatcher;
 using EtwIpGrabber.TdhParsing;
-using EtwIpGrabber.TdhParsing.Normalization;
-using EtwIpGrabber.Utils.ProcessNameResolver;
+using EtwIpGrabber.TdhParsing.Normalization.Models;
+using System.Threading.Channels;
 
-namespace EtwIpGrabber
+namespace EtwIpGrabber.Workers
 {
     internal sealed class TcpParseWorker(
         BoundedEventRingBuffer buffer,
         ITcpEtwParser parser,
+        Channel<TcpEvent> channel,
         ILogger<TcpParseWorker> logger)
         : BackgroundService
     {
@@ -23,7 +24,7 @@ namespace EtwIpGrabber
 
                 if (!parser.TryParse(snapshot, out var tcp))
                     continue;
-
+/*
                 logger.LogInformation(
                 @"TCP {EventType}
                 {Local}:{LPort} → {Remote}:{RPort}
@@ -41,7 +42,14 @@ namespace EtwIpGrabber
                     tcp.Direction,
                     tcp.Flags,
                     tcp.TimestampUtc);
+*/
+                await channel.Writer.WriteAsync(tcp, stoppingToken);
             }
+        }
+        public override async Task StopAsync(CancellationToken cancellationToken)
+        {
+            channel.Writer.TryComplete();
+            await base.StopAsync(cancellationToken);
         }
     }
 }
