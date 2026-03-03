@@ -1,6 +1,7 @@
 ﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 using EtwIpGrabber.TdhParsing.Decoder;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
+using EtwIpGrabber.Utils.ProcessNameResolver;
 
 namespace EtwIpGrabber.TdhParsing.Normalization
 {
@@ -33,7 +34,7 @@ namespace EtwIpGrabber.TdhParsing.Normalization
     ///   <item><description>Persistenza su DB</description></item>
     /// </list>
     /// </remarks>
-    internal class TcpEventNormalizer
+    internal class TcpEventNormalizer(IProcessNameResolver processNameResolver)
     {
         /// <summary>
         /// Normalizza il payload TCP raw decodificato utilizzando le informazioni 
@@ -65,7 +66,7 @@ namespace EtwIpGrabber.TdhParsing.Normalization
         /// Istanza di <see cref="TcpEvent"/> completamente normalizzata e pronta per 
         /// l'elaborazione nelle fasi successive della pipeline.
         /// </returns>
-        public TcpEvent Normalize(
+        public TcpEvent Normalize(          //ignora il worning di rendere il metodo statico. se reso tale l'app crasha :(
             in RawTcpDecodedEvent raw,
             in EVENT_HEADER header)
         {
@@ -74,6 +75,7 @@ namespace EtwIpGrabber.TdhParsing.Normalization
                 TimestampUtc = ConversionUtil.ConvertTimestamp(header.TimeStamp),
 
                 ProcessId = raw.ProcessId,
+                ProcessName = processNameResolver.Resolve(raw.ProcessId),
 
                 LocalIP = ConversionUtil.Ntohl(raw.LocalAddress),
                 RemoteIP = ConversionUtil.Ntohl(raw.RemoteAddress),

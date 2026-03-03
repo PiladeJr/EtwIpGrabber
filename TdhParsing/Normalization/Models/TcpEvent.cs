@@ -36,6 +36,17 @@
         public uint ProcessId { get; set; }
 
         /// <summary>
+        /// Il nome del processo che ha generato l'evento.
+        /// </summary>
+        /// <remarks>
+        /// questo campo non è presente all'interno dell'evento ETW originale,
+        /// ma viene arricchito durante la fase di normalizzazione effettuando una chiamata
+        /// al metodo <see cref="System.Diagnostics.Process.GetProcessById(int)"/> passando il 
+        /// campo <see cref="ProcessId"/>. 
+        /// </remarks>
+        public string? ProcessName { get; set; }
+
+        /// <summary>
         /// Indirizzo IP locale della connessione TCP (host byte order).
         /// </summary>
         public uint LocalIP { get; set; }

@@ -8,7 +8,6 @@ namespace EtwIpGrabber
     internal sealed class TcpParseWorker(
         BoundedEventRingBuffer buffer,
         ITcpEtwParser parser,
-        IProcessNameResolver processResolver,
         ILogger<TcpParseWorker> logger)
         : BackgroundService
     {
@@ -24,7 +23,6 @@ namespace EtwIpGrabber
 
                 if (!parser.TryParse(snapshot, out var tcp))
                     continue;
-                // _connectionStore.Track(in tcp);
 
                 logger.LogInformation(
                 @"TCP {EventType}
@@ -39,7 +37,7 @@ namespace EtwIpGrabber
                     ConversionUtil.FormatIPv4(tcp.RemoteIP),
                     tcp.RemotePort,
                     tcp.ProcessId,
-                    processResolver.Resolve(tcp.ProcessId),
+                    tcp.ProcessName,
                     tcp.Direction,
                     tcp.Flags,
                     tcp.TimestampUtc);
