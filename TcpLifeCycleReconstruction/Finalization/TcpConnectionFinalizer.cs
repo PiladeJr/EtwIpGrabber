@@ -1,20 +1,12 @@
-﻿
-
-using EtwIpGrabber.TcpLifeCycleReconstruction.Abstractions;
+﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Abstractions;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
 {
-    internal sealed class TcpConnectionFinalizer
-        : ITcpConnectionFinalizer
+    internal sealed class TcpConnectionFinalizer(
+        ICommunityIdProvider communityId) : ITcpConnectionFinalizer
     {
-        private readonly ICommunityIdProvider _communityId;
-
-        public TcpConnectionFinalizer(
-            ICommunityIdProvider communityId)
-        {
-            _communityId = communityId;
-        }
+        private readonly ICommunityIdProvider _communityId = communityId;
 
         public TcpConnectionLifecycle Finalize(
             TcpFlowInstance flow)
@@ -23,24 +15,22 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
 
             var endAt = flow.EndUtc ?? flow.LastSeenUtc;
 
-            if (endAt < startAt)
-                endAt = startAt;
+            if (endAt < startAt) endAt = startAt;
 
             var duration = endAt - startAt;
 
-            var communityKey = new TcpCommunityIdKey(
-                flow.Key.LocalIp,
-                flow.Key.LocalPort,
-                flow.Key.RemoteIp,
-                flow.Key.RemotePort);
-
-            var communityId =
-                _communityId.Compute(communityKey);
+            var communityId = _communityId.Compute(
+                new TcpCommunityIdKey(
+                    flow.Key.LocalIp,
+                    flow.Key.LocalPort,
+                    flow.Key.RemoteIp,
+                    flow.Key.RemotePort
+                ));
 
             return new TcpConnectionLifecycle
             {
                 ProcessId = flow.Key.ProcessId,
-                ProcessName = string.Empty, // opzionale, se disponibile
+                ProcessName = flow.ProcessName,
 
                 LocalIP = flow.Key.LocalIp,
                 LocalPort = flow.Key.LocalPort,

@@ -1,26 +1,23 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Abstractions;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
+using System.Threading.Channels;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Reconstruction
 {
-    internal sealed class DefaultTcpLifecycleReconstructor
-        : ITcpLifecycleReconstructor
+    internal sealed class DefaultTcpLifecycleReconstructor(
+        ITcpFlowTracker tracker,
+        ITcpFlowStore store,
+        ITcpConnectionFinalizer finalizer,
+        ChannelWriter<TcpConnectionLifecycle> output,
+        ILogger<DefaultTcpLifecycleReconstructor> logger)
+                : ITcpLifecycleReconstructor
     {
-        private readonly ITcpFlowTracker _tracker;
-        private readonly ITcpFlowStore _store;
-        private readonly ITcpConnectionFinalizer _finalizer;
-
-        public DefaultTcpLifecycleReconstructor(
-            ITcpFlowTracker tracker,
-            ITcpFlowStore store,
-            ITcpConnectionFinalizer finalizer)
-        {
-            _tracker = tracker;
-            _store = store;
-            _finalizer = finalizer;
-        }
-
+        private readonly ITcpFlowTracker _tracker = tracker;
+        private readonly ITcpFlowStore _store = store;
+        private readonly ITcpConnectionFinalizer _finalizer = finalizer;
+        private readonly ILogger<DefaultTcpLifecycleReconstructor> _logger = logger;
+        private readonly ChannelWriter<TcpConnectionLifecycle> _output = output;
         public void Process(in TcpEvent evt)
         {
             var flow = _tracker.GetOrCreate(evt);
@@ -34,7 +31,10 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Reconstruction
 
             _store.TryRemove(flow.Key, out _);
 
-            OnConnectionFinalized(lifecycle);
+            if (!_output.TryWrite(lifecycle))
+            {
+                _logger.LogError("Lifecycle channel full - dropping connection");
+            }
         }
 
         private void OnConnectionFinalized(

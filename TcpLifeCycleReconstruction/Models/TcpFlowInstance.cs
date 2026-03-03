@@ -7,6 +7,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
         in TcpEvent firstEvent)
     {
         public readonly TcpFlowKey Key = key;
+        public string ProcessName = firstEvent.ProcessName;
 
         public readonly DateTime FirstSeenUtc = firstEvent.TimestampUtc;
         public DateTime LastSeenUtc = firstEvent.TimestampUtc;

@@ -5,8 +5,7 @@ using EtwIpGrabber.TdhParsing.Normalization.Models;
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Tracking
 {
     internal sealed class DefaultTcpFlowTracker(
-        ITcpFlowStore store,
-        TcpFlowReuseGuard reuseGuard) : ITcpFlowTracker
+        ITcpFlowStore store,TcpFlowReuseGuard reuseGuard) : ITcpFlowTracker
     {
         private readonly ITcpFlowStore _store = store;
         private readonly TcpFlowReuseGuard _reuseGuard = reuseGuard;

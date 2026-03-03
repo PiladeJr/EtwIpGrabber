@@ -1,6 +1,4 @@
-﻿using EtwIpGrabber.TdhParsing.Normalization.Models;
-
-namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
+﻿namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
     internal readonly struct TcpCommunityIdKey
     {
