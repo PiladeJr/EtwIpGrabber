@@ -104,7 +104,7 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
             int offset = 0;
 
-            //TODO: Verifica se eliminare la seguente istruzione TryParseProcessContext(record, ref decoded);
+            //TODO: Verifica se eliminare la seguente istruzione TryParseProcessContext(record, ref decoded)
 
             for (int i = 0; i < propertyCount; i++)
             {
@@ -118,10 +118,10 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
                 IntPtr heapBuffer = IntPtr.Zero;
 
-                //================================================================//
-                // Tenta a formattare la proprietà, se il buffer è insufficiente, //
-                // aumenta la dimensione del buffer e riprova                     //
-                //================================================================//
+                //===========================================================//
+                // Tentativo di formattare la proprietà, se il buffer è      //
+                // insufficiente, aumenta la dimensione del buffer e riprova //
+                //===========================================================//
                 while (true)
                 {
                     var status = TdhNativeMethods.TdhFormatProperty(

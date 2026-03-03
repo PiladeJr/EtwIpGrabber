@@ -47,7 +47,7 @@ namespace EtwIpGrabber.TdhParsing.Normalization
         /// </para>
         /// <list type="bullet">
         ///   <item><description>Indirizzi IP: da <c>uint</c> in network byte order a host byte order</description></item>
-        ///   <item><description>Porte: da <c>ushort</c> in network byte order a host byte order</description></item>
+        ///   <item><description>Porte: già in host byte order, nessuna conversione necessaria</item>
         ///   <item><description>Direction: da codice raw a enum <see cref="TcpDirection"/></description></item>
         ///   <item><description>Flags: da codice raw a enum <see cref="TcpFlags"/></description></item>
         ///   <item><description>Timestamp: da FILETIME a <see cref="DateTime"/> UTC</description></item>
@@ -80,8 +80,8 @@ namespace EtwIpGrabber.TdhParsing.Normalization
                 LocalIP = ConversionUtil.Ntohl(raw.LocalAddress),
                 RemoteIP = ConversionUtil.Ntohl(raw.RemoteAddress),
 
-                LocalPort = ConversionUtil.Ntohs(raw.LocalPort),
-                RemotePort = ConversionUtil.Ntohs(raw.RemotePort),
+                LocalPort = raw.LocalPort,
+                RemotePort = raw.RemotePort,
 
                 Direction = ConversionUtil.DecodeDirection(raw.Direction),
                 Flags = ConversionUtil.DecodeFlags(raw.TcpFlags),

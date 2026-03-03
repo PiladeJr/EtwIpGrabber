@@ -44,7 +44,7 @@
         /// al metodo <see cref="System.Diagnostics.Process.GetProcessById(int)"/> passando il 
         /// campo <see cref="ProcessId"/>. 
         /// </remarks>
-        public string? ProcessName { get; set; }
+        public string ProcessName { get; set; } = string.Empty;
 
         /// <summary>
         /// Indirizzo IP locale della connessione TCP (host byte order).

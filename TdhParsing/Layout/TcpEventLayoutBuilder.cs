@@ -84,7 +84,7 @@ namespace EtwIpGrabber.TdhParsing.Layout
                 // in tal caso, è possibile aggiungerle allo switch di BindProperty        \\
                 // per supportare nuove versioni del provider manifest.                    \\
                 //=========================================================================\\
-                _logger.LogDebug("TDH Property: {Name} - Index {Index}",name,i);
+                // _logger.LogDebug("TDH Property: {Name} - Index {Index}",name,i)         \\
 
                 BindProperty(
                     name,
