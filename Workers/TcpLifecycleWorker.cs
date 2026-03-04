@@ -24,7 +24,14 @@ namespace EtwIpGrabber.Workers
                     var readTask = reader.WaitToReadAsync(stoppingToken).AsTask();
 
                     var completed = await Task.WhenAny(readTask, delayTask);
-                    if (completed == readTask && readTask.Result)
+                    
+                    // controlla il cancellation token prima di accedere ai task risultati
+                    if (stoppingToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    if (completed == readTask && !readTask.IsCanceled && (await readTask))
                     {
                         while (reader.TryRead(out var evt))
                         {
@@ -33,8 +40,7 @@ namespace EtwIpGrabber.Workers
                     }
 
                     var now = DateTime.UtcNow;
-
-                    if (now >= nextSweep)
+                    if (now >= nextSweep && !stoppingToken.IsCancellationRequested)
                     {
                         await sweeper.SweepAsync(now, stoppingToken);
                         nextSweep = now + sweepInterval;
@@ -43,7 +49,7 @@ namespace EtwIpGrabber.Workers
             }
             catch (TaskCanceledException)
             {
-                throw;
+                // Expected during graceful shutdown
             }
         }
         public override async Task StopAsync(CancellationToken cancellationToken)
