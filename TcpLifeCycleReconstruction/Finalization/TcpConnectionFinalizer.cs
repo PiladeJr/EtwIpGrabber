@@ -82,38 +82,49 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
         /// <returns>L'esito finale della connessione TCP.</returns>
         private static TcpConnectionOutcome DetermineOutcome(TcpFlowInstance flow)
         {
-            // connessione stabilita e chiusa normalmente
-            if ((flow.SeenAccept && flow.SeenClose) ||
-                (flow.SeenConnect && flow.SeenClose && !flow.SeenAccept))
-                return TcpConnectionOutcome.Closed;
+            // traffico dati ⇒ connessione riuscita
+            if (flow.SeenSend || flow.SeenReceive)
+            {
+                if (flow.SeenDisconnect)
+                    return TcpConnectionOutcome.Closed;
 
-            // connessione stabilita ma abortita
-            if (flow.SeenAccept && flow.SeenDisconnect)
-                return TcpConnectionOutcome.Aborted;
+                return TcpConnectionOutcome.Established;
+            }
 
-            // tentativo rifiutato dal peer
-            if (flow.SeenConnect && flow.SeenDisconnect && !flow.SeenAccept)
+            // handshake lato server
+            if (flow.SeenAccept)
+            {
+                if (flow.SeenDisconnect)
+                    return TcpConnectionOutcome.Closed;
+
+                return TcpConnectionOutcome.Established;
+            }
+
+            // tentativo rifiutato
+            if (flow.SeenConnect && flow.SeenDisconnect)
                 return TcpConnectionOutcome.Refused;
 
-            // timeout senza eventi di chiusura
-            if (flow.State == TcpLifecycleState.TimedOut &&
-                !flow.SeenClose && !flow.SeenDisconnect)
+            // errore TCP
+            if (flow.SeenFail)
+                return TcpConnectionOutcome.Aborted;
+
+            // timeout gestito dallo sweeper
+            if (flow.State == TcpLifecycleState.TimedOut)
                 return TcpConnectionOutcome.Timeout;
 
-            // connessione stabilita ma non ancora chiusa
-            if (flow.SeenAccept)
-                return TcpConnectionOutcome.Established;
+            // edge case: host irraggiungibile o firewall drop
+            if (flow.SeenRetransmit && !flow.SeenReceive)
+                return TcpConnectionOutcome.Timeout;
 
             return TcpConnectionOutcome.Unknown;
         }
 
         private static TcpHandshakeStage DetermineStage(TcpFlowInstance flow)
         {
-
-            if (flow.SeenClose || flow.SeenDisconnect)
+            if (flow.SeenDisconnect)
                 return TcpHandshakeStage.Closing;
 
-            if (flow.SeenAccept)
+            if (flow.SeenSend || flow.SeenReceive || flow.SeenAccept)
                 return TcpHandshakeStage.Established;
 
             if (flow.SeenConnect)

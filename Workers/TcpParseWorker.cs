@@ -1,8 +1,6 @@
 ﻿using EtwIpGrabber.EtwStructure.EventDispatcher;
 using EtwIpGrabber.TdhParsing;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
-using System.Linq.Expressions;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Channels;
 
 namespace EtwIpGrabber.Workers

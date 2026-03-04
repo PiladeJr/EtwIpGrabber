@@ -1,5 +1,6 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Abstractions;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
+using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using System.Threading.Channels;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Timeout

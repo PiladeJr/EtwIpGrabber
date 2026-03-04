@@ -14,11 +14,15 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
         public DateTime LastSeenUtc = firstEvent.TimestampUtc;
         public DateTime? EndUtc;
 
-        public bool SeenConnect;
-        public bool SeenAccept;
-        public bool SeenClose;
-        public bool SeenRetransmit;
-        public bool SeenDisconnect;
+        // Tutti i flag degli eventi osservabili per questa connessione TCP.
+            public bool SeenConnect;
+            public bool SeenAccept;
+            public bool SeenSend;
+            public bool SeenReceive;
+            public bool SeenDisconnect;
+            public bool SeenRetransmit;
+            public bool SeenReconnect;
+            public bool SeenFail;
 
         public TcpLifecycleState State = firstEvent.EventType switch
         {
@@ -38,27 +42,40 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
                     break;
 
                 case TcpEventType.Accept:
-
-                    if (State == TcpLifecycleState.New)
-                        State = TcpLifecycleState.Established;
-                    else
-                        State = TcpLifecycleState.Established;
+                    SeenAccept = true;
+                    State = TcpLifecycleState.Established;
                     break;
 
-                case TcpEventType.Close:
-                    SeenClose = true;
-                    EndUtc = e.TimestampUtc;
-                    State = TcpLifecycleState.Closed;
-                    return true;
+                case TcpEventType.Send:
+                    SeenSend = true;
+                    if (State == TcpLifecycleState.New)
+                        State = TcpLifecycleState.Connecting;
+                    break;
+
+                case TcpEventType.Receive:
+                    SeenReceive = true;
+                    State = TcpLifecycleState.Established;
+                    break;
 
                 case TcpEventType.Disconnect:
                     SeenDisconnect = true;
+                    EndUtc = e.TimestampUtc;
+                    State = TcpLifecycleState.Closing;
+                    return true;
+
+                case TcpEventType.Fail:
+                    SeenFail = true;
                     EndUtc = e.TimestampUtc;
                     State = TcpLifecycleState.Aborted;
                     return true;
 
                 case TcpEventType.Retransmit:
                     SeenRetransmit = true;
+                    break;
+
+                case TcpEventType.Reconnect:
+                    SeenReconnect = true;
+                    State = TcpLifecycleState.Connecting;
                     break;
             }
 

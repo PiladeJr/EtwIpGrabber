@@ -19,7 +19,8 @@ namespace EtwIpGrabber.Workers
                 { TcpConnectionOutcome.Refused, 0 },
                 { TcpConnectionOutcome.Timeout, 0 },
                 { TcpConnectionOutcome.Established, 0 },
-                { TcpConnectionOutcome.Aborted, 0 }
+                { TcpConnectionOutcome.Aborted, 0 },
+                { TcpConnectionOutcome.Unknown, 0 }
             };
 
             try
@@ -50,9 +51,9 @@ namespace EtwIpGrabber.Workers
                             lifecycle.Handshake,
                             lifecycle.CommunityId);
 
-                        if (outcomeCount.ContainsKey(lifecycle.Outcome))
+                        if (outcomeCount.TryGetValue(lifecycle.Outcome, out long value))
                         {
-                            outcomeCount[lifecycle.Outcome]++;
+                            outcomeCount[lifecycle.Outcome] = ++value;
                         }
                     }
                 }
@@ -69,12 +70,14 @@ namespace EtwIpGrabber.Workers
                     Environment.NewLine + "Refused: {Refused}" +
                     Environment.NewLine + "Timeout: {Timeout}" +
                     Environment.NewLine + "Established: {Established}" +
-                    Environment.NewLine + "Aborted: {Aborted}",
+                    Environment.NewLine + "Aborted: {Aborted}" +
+                    Environment.NewLine + "Unknown: {Unknown}",
                     outcomeCount[TcpConnectionOutcome.Closed],
                     outcomeCount[TcpConnectionOutcome.Refused],
                     outcomeCount[TcpConnectionOutcome.Timeout],
                     outcomeCount[TcpConnectionOutcome.Established],
-                    outcomeCount[TcpConnectionOutcome.Aborted]);
+                    outcomeCount[TcpConnectionOutcome.Aborted],
+                    outcomeCount[TcpConnectionOutcome.Unknown]);
             }
         }
     }

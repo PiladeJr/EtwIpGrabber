@@ -1,4 +1,5 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
+using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Tracking
 {
