@@ -1,6 +1,7 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Abstractions;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
+using EtwIpGrabber.TdhParsing.Normalization.Models;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
 {
@@ -20,7 +21,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
 
             var duration = endAt - startAt;
 
-            var communityId = _communityId.Compute(
+            var CommunityId = _communityId.Compute(
                 new TcpCommunityIdKey(
                     flow.Key.LocalIp,
                     flow.Key.LocalPort,
@@ -39,6 +40,8 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
                 RemoteIP = flow.Key.RemoteIp,
                 RemotePort = flow.Key.RemotePort,
 
+                Direction = DetermineDirection(flow),
+
                 StartAt = startAt,
                 EndAt = endAt,
                 Duration = duration,
@@ -46,7 +49,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
                 Outcome = DetermineOutcome(flow),
                 Handshake = DetermineStage(flow),
 
-                CommunityId = communityId
+                CommunityId = CommunityId
             };
         }
         /// <summary>
@@ -82,7 +85,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
         /// <returns>L'esito finale della connessione TCP.</returns>
         private static TcpConnectionOutcome DetermineOutcome(TcpFlowInstance flow)
         {
-            // traffico dati ⇒ connessione riuscita
+            // traffico dati => connessione riuscita
             if (flow.SeenSend || flow.SeenReceive)
             {
                 if (flow.SeenDisconnect)
@@ -113,7 +116,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
                 return TcpConnectionOutcome.Timeout;
 
             // edge case: host irraggiungibile o firewall drop
-            if (flow.SeenRetransmit && !flow.SeenReceive)
+            if (flow.SeenRetransmit && !flow.SeenReceive && !flow.SeenSend)
                 return TcpConnectionOutcome.Timeout;
 
             return TcpConnectionOutcome.Unknown;
@@ -131,6 +134,35 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
                 return TcpHandshakeStage.SynSent;
 
             return TcpHandshakeStage.None;
+        }
+
+        private static TcpDirection DetermineDirection(TcpFlowInstance flow)
+        {
+            if (flow.Key.LocalIp == flow.Key.RemoteIp)
+                return TcpDirection.Local;
+
+            if (flow.SeenConnect)
+                return TcpDirection.Outbound;
+
+            if (flow.SeenAccept)
+                return TcpDirection.Inbound;
+
+            if (flow.SeenSend)
+                return TcpDirection.Outbound;
+
+            if (flow.SeenReceive)
+                return TcpDirection.Inbound;
+
+            bool localEphemeral = flow.Key.LocalPort >= 49152;
+            bool remoteEphemeral = flow.Key.RemotePort >= 49152;
+
+            if (localEphemeral && !remoteEphemeral)
+                return TcpDirection.Outbound;
+
+            if (!localEphemeral && remoteEphemeral)
+                return TcpDirection.Inbound;
+
+            return TcpDirection.Unknown;
         }
     }
 }

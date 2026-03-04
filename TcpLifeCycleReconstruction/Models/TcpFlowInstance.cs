@@ -12,6 +12,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 
         public readonly DateTime FirstSeenUtc = firstEvent.TimestampUtc;
         public DateTime LastSeenUtc = firstEvent.TimestampUtc;
+        public TcpDirection Direction;
         public DateTime? EndUtc;
 
         // Tutti i flag degli eventi osservabili per questa connessione TCP.
@@ -54,7 +55,11 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 
                 case TcpEventType.Receive:
                     SeenReceive = true;
-                    State = TcpLifecycleState.Established;
+
+                    if (State == TcpLifecycleState.New ||
+                        State == TcpLifecycleState.Connecting)
+                        State = TcpLifecycleState.Established;
+
                     break;
 
                 case TcpEventType.Disconnect:

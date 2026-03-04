@@ -22,7 +22,7 @@ namespace EtwIpGrabber.TdhParsing
     {
         public unsafe bool TryParse(
             in EventRecordSnapshot snapshot,
-            out TcpEvent tcpEvent)
+            out TcpEvent? tcpEvent)
         {
             tcpEvent = null;
 

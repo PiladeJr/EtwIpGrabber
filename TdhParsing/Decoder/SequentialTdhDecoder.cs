@@ -259,6 +259,16 @@ namespace EtwIpGrabber.TdhParsing.Decoder
                     if (!ushort.TryParse(value, out decoded.RemotePort))
                         return false;
                     break;
+
+                case var _ when index == layout.DirectionIndex:
+                    if (!byte.TryParse(value, out decoded.Direction))
+                        return false;
+                    break;
+
+                case var _ when index == layout.TcpFlagsIndex:
+                    if (!byte.TryParse(value, out decoded.TcpFlags))
+                        return false;
+                    break;
             }
 
             return true;

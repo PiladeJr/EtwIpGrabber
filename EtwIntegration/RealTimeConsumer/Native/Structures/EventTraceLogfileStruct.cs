@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
+namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures
 {
     [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
     public struct EVENT_TRACE_LOGFILE

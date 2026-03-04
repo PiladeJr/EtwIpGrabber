@@ -1,4 +1,5 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
+using EtwIpGrabber.TdhParsing.Normalization.Models;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
@@ -12,6 +13,8 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 
         public uint RemoteIP { get; init; }
         public ushort RemotePort { get; init; }
+
+        public TcpDirection Direction { get; init; }
 
         public DateTime StartAt { get; init; }
         public DateTime EndAt { get; init; }

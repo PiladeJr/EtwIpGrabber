@@ -1,6 +1,7 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization;
+using EtwIpGrabber.TdhParsing.Normalization.Models;
 using System.Threading.Channels;
 
 namespace EtwIpGrabber.Workers
@@ -29,19 +30,23 @@ namespace EtwIpGrabber.Workers
                 {
                     while (reader.TryRead(out var lifecycle))
                     {
+                        var directionArrow = GetDirectionArrow(lifecycle.Direction);
+                        
                         logger.LogInformation(
                             "TCP Lifecycle" +
-                            Environment.NewLine + "Process: { Process}" +
-                            Environment.NewLine + "{Local}:{LPort} → {Remote}:{RPort}"+
-                            Environment.NewLine + "Start: {Start:O}"+
-                            Environment.NewLine + "End: { End:O}"+
-                            Environment.NewLine + "Duration: {Duration}"+
-                            Environment.NewLine + "Outcome: {Outcome}, Handshake stage: {Handshake}"+
+                            Environment.NewLine + "Process: {Process}" +
+                            Environment.NewLine + "{Direction} - {Local}:{LPort} {Arrow} {Remote}:{RPort}" +
+                            Environment.NewLine + "Start: {Start:O}" +
+                            Environment.NewLine + "End: {End:O}" +
+                            Environment.NewLine + "Duration: {Duration}" +
+                            Environment.NewLine + "Outcome: {Outcome}, Handshake stage: {Handshake}" +
                             Environment.NewLine + "CommunityId: {Cid}",
 
                             lifecycle.ProcessName,
+                            FormatDirection(lifecycle.Direction),
                             ConversionUtil.FormatIPv4(lifecycle.LocalIP),
                             lifecycle.LocalPort,
+                            directionArrow,
                             ConversionUtil.FormatIPv4(lifecycle.RemoteIP),
                             lifecycle.RemotePort,
                             lifecycle.StartAt,
@@ -80,5 +85,23 @@ namespace EtwIpGrabber.Workers
                     outcomeCount[TcpConnectionOutcome.Unknown]);
             }
         }
+
+        private static string GetDirectionArrow(TcpDirection direction) => direction switch
+        {
+            TcpDirection.Outbound => "→",
+            TcpDirection.Inbound => "←",
+            TcpDirection.Local => "<->",
+            TcpDirection.Unknown => "~>",
+            _ => "?"
+        };
+
+        private static string FormatDirection(TcpDirection direction) => direction switch
+        {
+            TcpDirection.Outbound => "Outbound",
+            TcpDirection.Inbound => "Inbound",
+            TcpDirection.Local => "Local",
+            TcpDirection.Unknown => "Unknown",
+            _ => "Unknown"
+        };
     }
 }

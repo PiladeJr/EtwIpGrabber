@@ -48,10 +48,7 @@ namespace EtwIpGrabber.TdhParsing.Layout
     /// </list>
     ///
     /// </summary>
-    internal unsafe sealed class TcpEventLayoutBuilder(ILogger<TcpEventLayoutBuilder> logger)
-    {
-       //logger da reinserire solo in fasi di debug:
-       //private readonly ILogger<TcpEventLayoutBuilder> _logger = logger
+    internal unsafe sealed class TcpEventLayoutBuilder{
         public TcpEventLayout Build(IntPtr traceInfoBuffer)
         {
             // Creazione layout vuoto
@@ -76,16 +73,6 @@ namespace EtwIpGrabber.TdhParsing.Layout
 
                 var name =
                     new string(namePtr);
-
-                //=========================================================================\\
-                // log inserito per motivi di debug, utile a capire il nome delle proprietà\\
-                // e il relativo indice runtime durante la fase di binding.                \\
-                // Se il binding fallisce, questo log aiuta a identificare quali proprietà \\
-                // non sono state mappate correttamente.                                   \\
-                // in tal caso, è possibile aggiungerle allo switch di BindProperty        \\
-                // per supportare nuove versioni del provider manifest.                    \\
-                //=========================================================================\\
-                // _logger.LogDebug("TDH Property: {Name} - Index {Index}",name,i)         \\
 
                 BindProperty(
                     name,

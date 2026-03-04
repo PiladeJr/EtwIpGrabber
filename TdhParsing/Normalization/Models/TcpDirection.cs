@@ -11,6 +11,7 @@
     {
         Inbound,
         Outbound,
-        Unknown
+        Unknown,
+        Local
     }
 }

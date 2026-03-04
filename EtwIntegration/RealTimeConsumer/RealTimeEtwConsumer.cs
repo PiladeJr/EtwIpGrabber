@@ -1,4 +1,5 @@
-﻿using EtwIpGrabber.EtwStructure.EventDispatcher;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
+using EtwIpGrabber.EtwStructure.EventDispatcher;
 using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native;
 using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
 using System.Runtime.InteropServices;
@@ -18,43 +19,34 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
     /// </list>
     /// La callback ETW deve essere pinned per evitare invalidazione da parte del GC.
     /// </remarks>
-    public sealed class RealtimeEtwConsumer : IRealtimeEtwConsumer
+    /// <remarks>
+    /// <b>Attenzione:</b>
+    /// EVENT_TRACE_LOGFILE deve rimanere allocato per tutta
+    /// la durata di ProcessTrace().
+    /// 
+    /// ETW non effettua una copia della struttura ma mantiene
+    /// il puntatore interno per il dispatch degli eventi.
+    /// 
+    /// Il rilascio anticipato della memoria causa:
+    /// <list type="bullet">
+    ///   <item><description>heap corruption;</description></item>
+    ///   <item><description>AccessViolationException;</description></item>
+    ///   <item><description>terminazione del processo in ntdll.dll.</description></item>
+    /// </list> 
+    /// </remarks>
+    public sealed class RealtimeEtwConsumer(IEventDispatcher dispatcher, ILogger<RealtimeEtwConsumer> logger) : IRealtimeEtwConsumer
     {
-        private readonly ILogger<RealtimeEtwConsumer> _logger;
+        private readonly ILogger<RealtimeEtwConsumer> _logger = logger;
 
         private ulong _traceHandle;
-        private Thread _processingThread;
-        private readonly IEventDispatcher _dispatcher;
-        private EventRecordCallback _callback;
+        private Thread? _processingThread;
+        private readonly IEventDispatcher _dispatcher = dispatcher;
+        private EventRecordCallback? _callback;
         private IntPtr _loggerNamePtr;
         private IntPtr _logfilePtr;
 
         private GCHandle _callbackHandle;
-
-        /// <summary>
-        /// Inizializza una nuova istanza di <see cref="RealtimeEtwConsumer"/>.
-        /// </summary>
-        /// <remarks>
-        /// <b>Attenzione:</b>
-        /// EVENT_TRACE_LOGFILE deve rimanere allocato per tutta
-        /// la durata di ProcessTrace().
-        /// 
-        /// ETW non effettua una copia della struttura ma mantiene
-        /// il puntatore interno per il dispatch degli eventi.
-        /// 
-        /// Il rilascio anticipato della memoria causa:
-        /// <list type="bullet">
-        ///   <item><description>heap corruption;</description></item>
-        ///   <item><description>AccessViolationException;</description></item>
-        ///   <item><description>terminazione del processo in ntdll.dll.</description></item>
-        /// </list> 
-        /// </remarks>
-        /// <param name="dispatcher">Dispatcher per l'accodamento degli eventi ETW.</param>
-        public RealtimeEtwConsumer(IEventDispatcher dispatcher, ILogger<RealtimeEtwConsumer> logger)
-        {
-            _dispatcher = dispatcher;
-            _logger = logger;
-        }
+        private bool _disposed;
 
         /// <summary>
         /// Avvia il consumo realtime degli eventi ETW per la sessione specificata.
@@ -62,12 +54,13 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// <param name="sessionName">Nome della sessione ETW a cui collegarsi.</param>
         public unsafe void Start(string sessionName)
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
             // Alloca LoggerName (LPWSTR)
             _loggerNamePtr = Marshal.StringToHGlobalUni(sessionName);
 
             //Alloca unmanaged EVENT_TRACE_LOGFILE
-            int size = Marshal.SizeOf<EVENT_TRACE_LOGFILE>() +
-                Marshal.SizeOf<TRACE_LOGFILE_HEADER>();
+            int size = Marshal.SizeOf<EVENT_TRACE_LOGFILE>();
             _logfilePtr = Marshal.AllocHGlobal(size);
 
             Span<byte> span = new((void*)_logfilePtr, size);
@@ -183,10 +176,21 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// </summary>
         public void Dispose()
         {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+
             if (_traceHandle != 0)
             {
                 NativeEtwConsumer.CloseTrace(_traceHandle);
                 _traceHandle = 0;
+            }
+
+            // Attendi il thread di elaborazione
+            if (_processingThread?.IsAlive == true)
+            {
+                _processingThread.Join(TimeSpan.FromSeconds(5));
             }
 
             // ETW non deve più accedere alla memoria prima di liberarla
@@ -206,6 +210,9 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
             {
                 _callbackHandle.Free();
             }
+
+            _callback = null;
+            _processingThread = null;
         }
     }
 }

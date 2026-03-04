@@ -7,6 +7,6 @@ namespace EtwIpGrabber.TdhParsing
     {
         bool TryParse(
             in EventRecordSnapshot snapshot,
-            out TcpEvent tcpEvent);
+            out TcpEvent? tcpEvent);
     }
 }
