@@ -1,6 +1,4 @@
 using EtwIpGrabber.EtwStructure;
-using EtwIpGrabber.EtwStructure.EventDispatcher;
-using EtwIpGrabber.EtwStructure.MetricsAndHealth;
 using EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions;
 using EtwIpGrabber.EtwStructure.RealTimeConsumer;
 using EtwIpGrabber.EtwStructure.SessionManager.Abstraction;
@@ -35,6 +33,10 @@ namespace EtwIpGrabber.Workers
                 _logger.LogInformation("ETW bootstrap completed successfully.");
 
                 await _monitor.RunAsync(stoppingToken);
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.LogInformation("ETW collection is stopping due to cancellation.");
             }
             catch (Exception ex)
             {

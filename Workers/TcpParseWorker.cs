@@ -1,6 +1,8 @@
 ﻿using EtwIpGrabber.EtwStructure.EventDispatcher;
 using EtwIpGrabber.TdhParsing;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
+using System.Linq.Expressions;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Channels;
 
 namespace EtwIpGrabber.Workers
@@ -14,37 +16,44 @@ namespace EtwIpGrabber.Workers
     {
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                if (!buffer.TryDequeue(out var snapshot))
+            try {
+                while (!stoppingToken.IsCancellationRequested)
                 {
-                    await Task.Delay(5, stoppingToken); 
-                    continue;
-                }
+                    if (!buffer.TryDequeue(out var snapshot))
+                    {
+                        await Task.Delay(5, stoppingToken);
+                        continue;
+                    }
 
-                if (!parser.TryParse(snapshot, out var tcp))
-                    continue;
-/*
-                logger.LogInformation(
-                @"TCP {EventType}
-                {Local}:{LPort} → {Remote}:{RPort}
-                Process: id = {Pid}; name = {PName}
-                Direction: {Dir}
-                Flags: {Flags}
-                TimestampUtc: {Ts:O}",
-                    tcp.EventType,
-                    ConversionUtil.FormatIPv4(tcp.LocalIP),
-                    tcp.LocalPort,
-                    ConversionUtil.FormatIPv4(tcp.RemoteIP),
-                    tcp.RemotePort,
-                    tcp.ProcessId,
-                    tcp.ProcessName,
-                    tcp.Direction,
-                    tcp.Flags,
-                    tcp.TimestampUtc);
-*/
-                await channel.Writer.WriteAsync(tcp, stoppingToken);
+                    if (!parser.TryParse(snapshot, out var tcp))
+                        continue;
+                    /*
+                                    logger.LogInformation(
+                                    @"TCP {EventType}
+                                    {Local}:{LPort} → {Remote}:{RPort}
+                                    Process: id = {Pid}; name = {PName}
+                                    Direction: {Dir}
+                                    Flags: {Flags}
+                                    TimestampUtc: {Ts:O}",
+                                        tcp.EventType,
+                                        ConversionUtil.FormatIPv4(tcp.LocalIP),
+                                        tcp.LocalPort,
+                                        ConversionUtil.FormatIPv4(tcp.RemoteIP),
+                                        tcp.RemotePort,
+                                        tcp.ProcessId,
+                                        tcp.ProcessName,
+                                        tcp.Direction,
+                                        tcp.Flags,
+                                        tcp.TimestampUtc);
+                    */
+                    await channel.Writer.WriteAsync(tcp, stoppingToken);
+                }
             }
+            catch (TaskCanceledException)
+            {
+               //ignore
+            }
+            
         }
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
