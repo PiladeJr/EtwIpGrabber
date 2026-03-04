@@ -24,11 +24,16 @@ namespace EtwIpGrabber.TdhParsing.Normalization
     {
         /// <summary>
         /// Converte una porta TCP da network byte order (big-endian)
-        /// a host byte order.
+        /// a host byte order. (little-endian)
         /// </summary>
         /// <remarks>
         /// I campi provenienti dal payload ETW sono serializzati in network order.
         /// Questa funzione applica manualmente lo swap dei byte.
+        /// <para><b>ATTENZIONE: </b></para> 
+        /// Sfruttando il metodo <c>TdhFormatProperties</c> le porte ottenute sono già in
+        /// host byte order, quindi questa conversione non è necessaria e non deve essere
+        /// applicata, Il metodo è mantenuto per completezza e per eventuali casi futuri
+        /// in cui si dovesse lavorare con dati raw in network byte order.
         /// </remarks>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ushort Ntohs(ushort value)
@@ -92,11 +97,14 @@ namespace EtwIpGrabber.TdhParsing.Normalization
         {
             return desc.Id switch
             {
-                10 => TcpEventType.Connect,
-                11 => TcpEventType.Accept,
-                12 => TcpEventType.Disconnect,
+                10 => TcpEventType.Send,
+                11 => TcpEventType.Receive,
+                12 => TcpEventType.Connect,
+                13 => TcpEventType.Disconnect,
                 14 => TcpEventType.Retransmit,
-                15 => TcpEventType.Close,
+                15 => TcpEventType.Accept,
+                16 => TcpEventType.Reconnect,
+                17 => TcpEventType.Fail,
                 _ => TcpEventType.Unknown
             };
         }

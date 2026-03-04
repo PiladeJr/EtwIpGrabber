@@ -34,9 +34,7 @@ namespace EtwIpGrabber.TdhParsing.Layout
     /// </summary>
     internal sealed class TcpEventLayoutCache
     {
-        private readonly ConcurrentDictionary<
-            TdhEventKey,
-            TcpEventLayout> _cache = new();
+        private readonly ConcurrentDictionary<TdhEventKey,TcpEventLayout> _cache = new();
 
         public TcpEventLayout GetOrAdd(
             in TdhEventKey key,

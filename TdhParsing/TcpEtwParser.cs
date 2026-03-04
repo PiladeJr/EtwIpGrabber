@@ -99,8 +99,7 @@ namespace EtwIpGrabber.TdhParsing
                 logger.LogCritical(av,
                     "TDH AccessViolation — likely manifest drift or struct mismatch");
 
-                Environment.FailFast(
-                    "TDH ABI violation", av);
+                Environment.FailFast("TDH ABI violation", av);
 
                 return false;
             }

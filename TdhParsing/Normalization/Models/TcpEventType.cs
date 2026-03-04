@@ -10,11 +10,15 @@
     /// </summary>
     public enum TcpEventType : byte
     {
+        Send,
+        Receive,
         Connect,
         Accept,
         Disconnect,
         Retransmit,
-        Close,
+        Reconnect,
+        Close,      // opzionale
+        Fail,
         Unknown
     }
 }

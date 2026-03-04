@@ -50,7 +50,8 @@ namespace EtwIpGrabber.TdhParsing.Layout
     /// </summary>
     internal unsafe sealed class TcpEventLayoutBuilder(ILogger<TcpEventLayoutBuilder> logger)
     {
-        private readonly ILogger<TcpEventLayoutBuilder> _logger = logger;
+       //logger da reinserire solo in fasi di debug:
+       //private readonly ILogger<TcpEventLayoutBuilder> _logger = logger
         public TcpEventLayout Build(IntPtr traceInfoBuffer)
         {
             // Creazione layout vuoto

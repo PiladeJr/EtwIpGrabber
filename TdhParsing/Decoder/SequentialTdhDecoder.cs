@@ -263,22 +263,5 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
             return true;
         }
-        /* Codice inutilizzato per ora
-        private static unsafe void TryParseProcessContext(
-            TDH_EVENT_RECORD* record,
-            ref RawTcpDecodedEvent decoded)
-        {
-            var ext = record->ExtendedData;
-
-            for (int i = 0; i < record->ExtendedDataCount; i++)
-            {
-                if (ext[i].ExtType != 0x0B)
-                    continue;
-
-                var info = (NetworkConnectionInfo*)ext[i].DataPtr;
-
-                return;
-            }
-        }*/
     }
 }
