@@ -1,4 +1,6 @@
-﻿namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
+﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
+
+namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
     internal sealed class TcpConnectionLifecycle
     {
@@ -13,9 +15,12 @@
 
         public DateTime StartAt { get; init; }
         public DateTime EndAt { get; init; }
-
         public TimeSpan Duration { get; init; }
 
+        public TcpConnectionOutcome Outcome { get; init; }
+        public TcpHandshakeStage Handshake { get; init; }
+
         public string CommunityId { get; init; } = string.Empty;
+
     }
 }

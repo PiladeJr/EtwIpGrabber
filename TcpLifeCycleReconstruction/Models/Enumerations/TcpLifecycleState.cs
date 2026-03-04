@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
+﻿namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations
 {
     internal enum TcpLifecycleState : byte
     {

@@ -1,4 +1,5 @@
-﻿using EtwIpGrabber.TdhParsing.Normalization.Models;
+﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
+using EtwIpGrabber.TdhParsing.Normalization.Models;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
@@ -16,6 +17,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
         public bool SeenConnect;
         public bool SeenAccept;
         public bool SeenClose;
+        public bool SeenRetransmit;
         public bool SeenDisconnect;
 
         public TcpLifecycleState State = firstEvent.EventType switch
@@ -36,8 +38,11 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
                     break;
 
                 case TcpEventType.Accept:
-                    SeenAccept = true;
-                    State = TcpLifecycleState.Established;
+
+                    if (State == TcpLifecycleState.New)
+                        State = TcpLifecycleState.Established;
+                    else
+                        State = TcpLifecycleState.Established;
                     break;
 
                 case TcpEventType.Close:
@@ -53,8 +58,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
                     return true;
 
                 case TcpEventType.Retransmit:
-                    if (State == TcpLifecycleState.New)
-                        State = TcpLifecycleState.Connecting;
+                    SeenRetransmit = true;
                     break;
             }
 
