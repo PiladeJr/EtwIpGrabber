@@ -1,4 +1,4 @@
-﻿using EtwIpGrabber.EtwStructure.EventDispatcher;
+﻿using EtwIpGrabber.EtwIntegration.EventDispatcher;
 using EtwIpGrabber.TdhParsing;
 using EtwIpGrabber.TdhParsing.Normalization;
 using EtwIpGrabber.TdhParsing.Normalization.Models;

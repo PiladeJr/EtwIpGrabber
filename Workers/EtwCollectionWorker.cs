@@ -1,7 +1,7 @@
-using EtwIpGrabber.EtwStructure;
-using EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer;
-using EtwIpGrabber.EtwStructure.SessionManager.Abstraction;
+using EtwIpGrabber.EtwIntegration;
+using EtwIpGrabber.EtwIntegration.ProviderConfiguration.Abstractions;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
+using EtwIpGrabber.EtwIntegration.SessionManager.Abstraction;
 
 namespace EtwIpGrabber.Workers
 {

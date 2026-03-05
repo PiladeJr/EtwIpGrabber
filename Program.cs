@@ -1,14 +1,16 @@
-using EtwIpGrabber.EtwStructure;
-using EtwIpGrabber.EtwStructure.EventDispatcher;
-using EtwIpGrabber.EtwStructure.MetricsAndHealth;
-using EtwIpGrabber.EtwStructure.ProviderConfiguration;
-using EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer;
-using EtwIpGrabber.EtwStructure.SessionManager;
-using EtwIpGrabber.EtwStructure.SessionManager.Abstraction;
-using EtwIpGrabber.EtwStructure.SessionManager.Configuration;
-using EtwIpGrabber.EtwStructure.SessionManager.Configuration.Implementation;
-using EtwIpGrabber.EtwStructure.SessionManager.Native;
+using EtwIpGrabber.EtwIntegration;
+using EtwIpGrabber.EtwIntegration.EventDispatcher;
+using EtwIpGrabber.EtwIntegration.MetricsAndHealth;
+using EtwIpGrabber.EtwIntegration.ProviderConfiguration;
+using EtwIpGrabber.EtwIntegration.ProviderConfiguration.Abstractions;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
+using EtwIpGrabber.EtwIntegration.SessionManager;
+using EtwIpGrabber.EtwIntegration.SessionManager.Abstraction;
+using EtwIpGrabber.EtwIntegration.SessionManager.Configuration;
+using EtwIpGrabber.EtwIntegration.SessionManager.Configuration.Implementation;
+using EtwIpGrabber.EtwIntegration.SessionManager.Native;
+using EtwIpGrabber.PersistencyLayer.Filters;
+using EtwIpGrabber.PersistencyLayer.Repository;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Abstractions;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Finalization;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
@@ -27,6 +29,7 @@ using EtwIpGrabber.TdhParsing.Normalization.Models;
 using EtwIpGrabber.Utils.CommunityIdResolver;
 using EtwIpGrabber.Utils.ProcessNameResolver;
 using EtwIpGrabber.Workers;
+using EtwIpGrabber.Workers.FanOut;
 using Microsoft.Extensions.Logging.EventLog;
 using System.Threading.Channels;
 
@@ -45,6 +48,7 @@ builder.Services.AddSingleton<BoundedEventRingBuffer>(sp =>
 });
 
 //------------------ ETW core components ------------------
+
 builder.Services.AddSingleton<IEtwSessionConfig>(_ =>DefaultEtwSessionConfig.Create());
 builder.Services.AddSingleton<EtwSessionPropertiesFactory>();
 builder.Services.AddSingleton<IEtwSessionController, EtwSessionController>();
@@ -60,6 +64,7 @@ builder.Services.AddSingleton<IRealtimeEtwConsumer, RealtimeEtwConsumer>(sp =>
 builder.Services.AddSingleton<EtwTelemetryMonitor>();
 
 //------------------ TDH Parsing related ------------------
+
 builder.Services.AddSingleton<TraceEventInfoBufferPool>();
 builder.Services.AddSingleton<IEtwMetadataResolver, TdhEventMetadataResolver>();
 
@@ -71,6 +76,7 @@ builder.Services.AddSingleton<TcpEventNormalizer>();
 
 builder.Services.AddSingleton<ITcpEtwParser, TcpEtwParser>();
 builder.Services.AddSingleton<IProcessNameResolver, ProcessNameResolver>();
+
 //------------------ Lifecycle reconstruction related ------------------
 
 //=================================================//
@@ -103,7 +109,7 @@ var lifecycleChannel = Channel.CreateBounded<TcpConnectionLifecycle>(
     {
         FullMode = BoundedChannelFullMode.Wait,
         SingleReader = true,
-        SingleWriter = true
+        SingleWriter = false
     });
 
 builder.Services.AddSingleton(lifecycleChannel);
@@ -119,13 +125,36 @@ builder.Services.AddSingleton<ITcpTimeoutSweeper, TcpTimeoutSweeper>();
 builder.Services.AddSingleton<ICommunityIdProvider, CommunityIdProvider>();
 builder.Services.AddSingleton<CommunityIDGenerator>();
 
+//------------------ Persistence layer -------------------
+
+builder.Services.AddSingleton<ITcpConnectionRepository>(
+    new TcpConnectionRepository("Data Source=Connections.db"));
+
+// filtro di persistenza: esclude tutte le connessioni non private 
+builder.Services.AddSingleton<IPersistenceFilter>(
+    new NetworkScopePersistenceFilter(
+        NetworkScopeFilters.Private));
+
+//------------------ Channel Workers ------------------
+
+builder.Services.AddSingleton(
+    new TcpLoggerChannel(
+        Channel.CreateBounded<TcpConnectionLifecycle>(50000)));
+
+builder.Services.AddSingleton(
+    new TcpPersistenceChannel(
+        Channel.CreateBounded<TcpConnectionLifecycle>(50000)));
+
 //------------------ Workers ------------------
 builder.Services.AddHostedService<EtwCollectionWorker>();
 builder.Services.AddHostedService<TcpParseWorker>();
 builder.Services.AddHostedService<TcpLifecycleWorker>();
+builder.Services.AddHostedService<TcpLifecycleFanOutWorker>();
+builder.Services.AddHostedService<TcpPersistenceWorker>();
 builder.Services.AddHostedService<TcpLifecycleLoggerWorker>();
 
 //------------------ Logging ------------------
+
 builder.Logging.ClearProviders();
 
 builder.Logging.SetMinimumLevel(LogLevel.Information);
@@ -139,6 +168,7 @@ builder.Logging.AddEventLog(settings =>
 builder.Logging.AddFilter<EventLogLoggerProvider>(
     null,
     LogLevel.Information);
+
 //------------------ Crash logging ------------------
 var crashPath =
     Path.Combine(

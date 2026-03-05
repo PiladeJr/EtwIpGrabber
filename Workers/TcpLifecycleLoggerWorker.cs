@@ -2,18 +2,18 @@
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
-using System.Threading.Channels;
+using EtwIpGrabber.Workers.FanOut;
 
 namespace EtwIpGrabber.Workers
 {
     internal sealed class TcpLifecycleLoggerWorker(
-        Channel<TcpConnectionLifecycle> channel,
+        TcpLoggerChannel channel,
         ILogger<TcpLifecycleLoggerWorker> logger)
         : BackgroundService
     {
         protected override async Task ExecuteAsync( CancellationToken stoppingToken)
         {
-            var reader = channel.Reader;
+            var reader = channel.Channel.Reader;
             var outcomeCount = new Dictionary<TcpConnectionOutcome, long>
             {
                 { TcpConnectionOutcome.Closed, 0 },
@@ -26,40 +26,37 @@ namespace EtwIpGrabber.Workers
 
             try
             {
-                while (await reader.WaitToReadAsync(stoppingToken))
+                await foreach (var lifecycle in reader.ReadAllAsync(stoppingToken))
                 {
-                    while (reader.TryRead(out var lifecycle))
+                    var directionArrow = GetDirectionArrow(lifecycle.Direction);
+
+                    logger.LogInformation(
+                        "TCP Lifecycle" +
+                        Environment.NewLine + "Process: {Process}" +
+                        Environment.NewLine + "{Direction} - {Local}:{LPort} {Arrow} {Remote}:{RPort}" +
+                        Environment.NewLine + "Start: {Start:O}" +
+                        Environment.NewLine + "End: {End:O}" +
+                        Environment.NewLine + "Duration: {Duration}" +
+                        Environment.NewLine + "Outcome: {Outcome}, Handshake stage: {Handshake}" +
+                        Environment.NewLine + "CommunityId: {Cid}",
+
+                        lifecycle.ProcessName,
+                        FormatDirection(lifecycle.Direction),
+                        ConversionUtil.FormatIPv4(lifecycle.LocalIP),
+                        lifecycle.LocalPort,
+                        directionArrow,
+                        ConversionUtil.FormatIPv4(lifecycle.RemoteIP),
+                        lifecycle.RemotePort,
+                        lifecycle.StartAt,
+                        lifecycle.EndAt,
+                        lifecycle.Duration,
+                        lifecycle.Outcome,
+                        lifecycle.Handshake,
+                        lifecycle.CommunityId);
+
+                    if (outcomeCount.TryGetValue(lifecycle.Outcome, out long value))
                     {
-                        var directionArrow = GetDirectionArrow(lifecycle.Direction);
-                        
-                        logger.LogInformation(
-                            "TCP Lifecycle" +
-                            Environment.NewLine + "Process: {Process}" +
-                            Environment.NewLine + "{Direction} - {Local}:{LPort} {Arrow} {Remote}:{RPort}" +
-                            Environment.NewLine + "Start: {Start:O}" +
-                            Environment.NewLine + "End: {End:O}" +
-                            Environment.NewLine + "Duration: {Duration}" +
-                            Environment.NewLine + "Outcome: {Outcome}, Handshake stage: {Handshake}" +
-                            Environment.NewLine + "CommunityId: {Cid}",
-
-                            lifecycle.ProcessName,
-                            FormatDirection(lifecycle.Direction),
-                            ConversionUtil.FormatIPv4(lifecycle.LocalIP),
-                            lifecycle.LocalPort,
-                            directionArrow,
-                            ConversionUtil.FormatIPv4(lifecycle.RemoteIP),
-                            lifecycle.RemotePort,
-                            lifecycle.StartAt,
-                            lifecycle.EndAt,
-                            lifecycle.Duration,
-                            lifecycle.Outcome,
-                            lifecycle.Handshake,
-                            lifecycle.CommunityId);
-
-                        if (outcomeCount.TryGetValue(lifecycle.Outcome, out long value))
-                        {
-                            outcomeCount[lifecycle.Outcome] = ++value;
-                        }
+                        outcomeCount[lifecycle.Outcome] = ++value;
                     }
                 }
             }
