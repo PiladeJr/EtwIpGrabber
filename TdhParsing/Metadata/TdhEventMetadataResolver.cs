@@ -1,4 +1,4 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 using EtwIpGrabber.TdhParsing.Metadata.Abstract;
 using EtwIpGrabber.TdhParsing.Metadata.Native;
 using System.Runtime.InteropServices;

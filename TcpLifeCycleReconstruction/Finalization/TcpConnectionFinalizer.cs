@@ -2,6 +2,7 @@
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
+using EtwIpGrabber.Utils.ConnectionClassification;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
 {
@@ -41,6 +42,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
                 RemotePort = flow.Key.RemotePort,
 
                 Direction = DetermineDirection(flow),
+                Classification = ClassifyConnection(flow.Key.LocalIp,flow.Key.RemoteIp),
 
                 StartAt = startAt,
                 EndAt = endAt,
@@ -163,6 +165,33 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
                 return TcpDirection.Inbound;
 
             return TcpDirection.Unknown;
+        }
+
+        private static NetworkScope ClassifyConnection(uint LocalIp, uint RemoteIp) {
+
+            NetworkScope local =  NetworkClassification.Classify(LocalIp);
+            NetworkScope remote = NetworkClassification.Classify(RemoteIp);
+
+            // loopback puro: 127.0.0.0 -> 127.0.0.0
+            if (local == NetworkScope.Loopback && remote == NetworkScope.Loopback)
+                return NetworkScope.Loopback;
+
+            // multicast o broadcast: 
+            if (local == NetworkScope.Multicast || remote == NetworkScope.Multicast)
+                return NetworkScope.Multicast;
+
+            if (local == NetworkScope.Broadcast || remote == NetworkScope.Broadcast)
+                return NetworkScope.Broadcast;
+
+            // internet: almeno uno dei due è pubblico
+            if (local == NetworkScope.Public || remote == NetworkScope.Public)
+                return NetworkScope.Public;
+
+            // LAN: entrambe devono essere private
+            if (local == NetworkScope.Private && remote == NetworkScope.Private)
+                return NetworkScope.Private;
+
+            return NetworkScope.Unknown;
         }
     }
 }

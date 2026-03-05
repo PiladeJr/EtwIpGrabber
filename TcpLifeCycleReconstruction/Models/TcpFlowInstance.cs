@@ -3,7 +3,7 @@ using EtwIpGrabber.TdhParsing.Normalization.Models;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
-    internal sealed class TcpFlowInstance(
+    public sealed class TcpFlowInstance(
         in TcpFlowKey key,
         in TcpEvent firstEvent)
     {
@@ -15,8 +15,10 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
         public TcpDirection Direction;
         public DateTime? EndUtc;
 
+        public string CommunityId = string.Empty;
+
         // Tutti i flag degli eventi osservabili per questa connessione TCP.
-            public bool SeenConnect;
+        public bool SeenConnect;
             public bool SeenAccept;
             public bool SeenSend;
             public bool SeenReceive;

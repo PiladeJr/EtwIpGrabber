@@ -1,4 +1,4 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
 
 namespace EtwIpGrabber.TdhParsing

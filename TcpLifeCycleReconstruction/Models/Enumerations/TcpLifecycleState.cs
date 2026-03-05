@@ -1,6 +1,6 @@
 ﻿namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations
 {
-    internal enum TcpLifecycleState : byte
+    public enum TcpLifecycleState : byte
     {
         New,
         Connecting,

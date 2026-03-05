@@ -1,4 +1,4 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 using EtwIpGrabber.TdhParsing.Decoder.Abstraction;
 using EtwIpGrabber.TdhParsing.Layout;
 using EtwIpGrabber.TdhParsing.Layout.Struct;
@@ -257,16 +257,6 @@ namespace EtwIpGrabber.TdhParsing.Decoder
 
                 case var _ when index == layout.RemotePortIndex:
                     if (!ushort.TryParse(value, out decoded.RemotePort))
-                        return false;
-                    break;
-
-                case var _ when index == layout.DirectionIndex:
-                    if (!byte.TryParse(value, out decoded.Direction))
-                        return false;
-                    break;
-
-                case var _ when index == layout.TcpFlagsIndex:
-                    if (!byte.TryParse(value, out decoded.TcpFlags))
                         return false;
                     break;
             }

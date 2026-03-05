@@ -1,5 +1,5 @@
 ﻿using System.Runtime.InteropServices;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 
 namespace EtwIpGrabber.TdhParsing.Layout.Struct
 {

@@ -1,5 +1,5 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 using System.Runtime.InteropServices;
 
 namespace EtwIpGrabber.TdhParsing.Interop

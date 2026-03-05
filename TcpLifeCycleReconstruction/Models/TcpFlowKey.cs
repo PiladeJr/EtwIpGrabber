@@ -2,7 +2,7 @@
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
-    internal readonly struct TcpFlowKey(
+    public readonly struct TcpFlowKey(
         uint localIp,
         ushort localPort,
         uint remoteIp,

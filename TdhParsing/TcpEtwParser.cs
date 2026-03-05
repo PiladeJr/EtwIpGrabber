@@ -1,5 +1,5 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 using EtwIpGrabber.TdhParsing.Decoder.Abstraction;
 using EtwIpGrabber.TdhParsing.Interop;
 using EtwIpGrabber.TdhParsing.Layout;

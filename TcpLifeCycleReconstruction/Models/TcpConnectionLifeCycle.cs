@@ -1,9 +1,10 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
+using EtwIpGrabber.Utils.ConnectionClassification;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
-    internal sealed class TcpConnectionLifecycle
+    public sealed class TcpConnectionLifecycle
     {
         public uint ProcessId { get; init; }
         public string ProcessName { get; init; } = string.Empty;
@@ -15,6 +16,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
         public ushort RemotePort { get; init; }
 
         public TcpDirection Direction { get; init; }
+        public NetworkScope Classification { get; init; }
 
         public DateTime StartAt { get; init; }
         public DateTime EndAt { get; init; }

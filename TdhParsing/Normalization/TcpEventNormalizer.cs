@@ -1,4 +1,4 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 using EtwIpGrabber.TdhParsing.Decoder;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
 using EtwIpGrabber.Utils.ProcessNameResolver;

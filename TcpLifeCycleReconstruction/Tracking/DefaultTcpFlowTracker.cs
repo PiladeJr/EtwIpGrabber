@@ -5,7 +5,9 @@ using EtwIpGrabber.TdhParsing.Normalization.Models;
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Tracking
 {
     internal sealed class DefaultTcpFlowTracker(
-        ITcpFlowStore store,TcpFlowReuseGuard reuseGuard) : ITcpFlowTracker
+        ITcpFlowStore store,
+        TcpFlowReuseGuard reuseGuard,
+        ICommunityIdProvider communityIdProvider) : ITcpFlowTracker
     {
         private readonly ITcpFlowStore _store = store;
         private readonly TcpFlowReuseGuard _reuseGuard = reuseGuard;
@@ -16,6 +18,13 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Tracking
             var key = TcpFlowKey.FromEvent(evt);
 
             var flow = _store.GetOrCreate(key, evt);
+
+            flow.CommunityId = communityIdProvider.Compute(
+                new TcpCommunityIdKey(
+                    key.LocalIp,
+                    key.LocalPort,
+                    key.RemoteIp,
+                    key.RemotePort));
 
             // tuple reuse detection
             if (_reuseGuard.ShouldSplit(flow, evt.TimestampUtc))
