@@ -10,7 +10,8 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Reconstruction
         ITcpFlowStore store,
         ITcpConnectionFinalizer finalizer,
         ChannelWriter<TcpConnectionLifecycle> output,
-        ILogger<DefaultTcpLifecycleReconstructor> logger)
+        ILogger<DefaultTcpLifecycleReconstructor> logger,
+        ITcpEventObserver observer)
                 : ITcpLifecycleReconstructor
     {
         private readonly ITcpFlowTracker _tracker = tracker;
@@ -18,11 +19,15 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Reconstruction
         private readonly ITcpConnectionFinalizer _finalizer = finalizer;
         private readonly ILogger<DefaultTcpLifecycleReconstructor> _logger = logger;
         private readonly ChannelWriter<TcpConnectionLifecycle> _output = output;
+        private readonly ITcpEventObserver _observer = observer;
         public void Process(in TcpEvent evt)
         {
             var flow = _tracker.GetOrCreate(evt);
 
             var shouldFinalize = flow.Apply(evt);
+
+            // hook per analisi degli eventi dal codice.
+            _observer.OnTcpEvent(evt, flow);
 
             if (!shouldFinalize)
                 return;
