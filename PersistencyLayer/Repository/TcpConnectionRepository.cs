@@ -4,15 +4,17 @@ using Microsoft.Data.Sqlite;
 
 namespace EtwIpGrabber.PersistencyLayer.Repository
 {
-    internal sealed class TcpConnectionRepository(string connectionString)
-                : ITcpConnectionRepository
+    internal sealed class TcpConnectionRepository : ITcpConnectionRepository
     {
-        private readonly string _connectionString = connectionString;
+        private readonly string _connectionString = 
+            $"Data Source={Path.Combine(AppContext.BaseDirectory, "Connections.db")}";
 
         public async Task UpsertFlowAsync(TcpFlowInstance flow, CancellationToken ct)
         {
             await using var conn = new SqliteConnection(_connectionString);
+
             await conn.OpenAsync(ct);
+            await EnsureSchemaAsync(conn);
 
             var cmd = conn.CreateCommand();
 
@@ -62,7 +64,7 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
         {
             await using var conn = new SqliteConnection(_connectionString);
             await conn.OpenAsync(ct);
-
+            await EnsureSchemaAsync(conn);
             var cmd = conn.CreateCommand();
 
             cmd.CommandText =
@@ -116,6 +118,47 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
             if (flow.SeenFail) flags |= TcpFlowFlags.Fail;
 
             return (int)flags;
+        }
+
+        private async Task EnsureSchemaAsync(SqliteConnection conn)
+        {
+            var cmd = conn.CreateCommand();
+
+            cmd.CommandText =
+            """
+                CREATE TABLE IF NOT EXISTS tcp_flows(
+                community_id TEXT PRIMARY KEY,
+                process_id INTEGER,
+                process_name TEXT,
+                local_ip INTEGER,
+                local_port INTEGER,
+                remote_ip INTEGER,
+                remote_port INTEGER,
+                first_seen TEXT,
+                last_seen TEXT,
+                flags INTEGER,
+                state INTEGER
+                );
+
+                CREATE TABLE IF NOT EXISTS tcp_lifecycle(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    community_id TEXT,
+                    process_id INTEGER,
+                    process_name TEXT,
+                    local_ip INTEGER,
+                    local_port INTEGER,
+                    remote_ip INTEGER,
+                    remote_port INTEGER,
+                    start_at TEXT,
+                    end_at TEXT,
+                    duration REAL,
+                    outcome INTEGER,
+                    handshake INTEGER,
+                    direction INTEGER
+                );
+            """;
+
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

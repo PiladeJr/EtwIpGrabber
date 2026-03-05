@@ -127,8 +127,7 @@ builder.Services.AddSingleton<CommunityIDGenerator>();
 
 //------------------ Persistence layer -------------------
 
-builder.Services.AddSingleton<ITcpConnectionRepository>(
-    new TcpConnectionRepository("Data Source=Connections.db"));
+builder.Services.AddSingleton<ITcpConnectionRepository, TcpConnectionRepository>();
 
 // filtro di persistenza: esclude tutte le connessioni non private 
 builder.Services.AddSingleton<IPersistenceFilter>(
