@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.SessionManager.Configuration
+﻿namespace EtwIpGrabber.EtwIntegration.SessionManager.Configuration
 {
     /// <summary>
     /// Classe responsabile di garantire che la configurazione di una sessione ETW 

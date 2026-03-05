@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions
+﻿namespace EtwIpGrabber.EtwIntegration.ProviderConfiguration.Abstractions
 {
     /// <summary>
     /// Definisce il contratto per l'abilitazione di provider ETW manifest-based

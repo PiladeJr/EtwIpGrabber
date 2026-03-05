@@ -1,6 +1,6 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
 
-namespace EtwIpGrabber.EtwStructure.EventDispatcher
+namespace EtwIpGrabber.EtwIntegration.EventDispatcher
 {
     /// <summary>
     /// Contratto per l'inoltro degli eventi ETW dalla callback realtime

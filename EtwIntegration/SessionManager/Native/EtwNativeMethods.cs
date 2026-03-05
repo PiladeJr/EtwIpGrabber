@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.SessionManager.Native
+namespace EtwIpGrabber.EtwIntegration.SessionManager.Native
 {
     [StructLayout(LayoutKind.Explicit)]
     public struct WNODE_HEADER

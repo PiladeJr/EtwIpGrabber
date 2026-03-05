@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.SessionManager.Configuration
+﻿namespace EtwIpGrabber.EtwIntegration.SessionManager.Configuration
 {
     /// <summary>
     /// Rappresenta un profilo di tuning per la configurazione dei buffer in una sessione 

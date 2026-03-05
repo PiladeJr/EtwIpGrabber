@@ -1,7 +1,7 @@
-﻿using EtwIpGrabber.EtwStructure.ProviderConfiguration.Abstractions;
-using EtwIpGrabber.EtwStructure.ProviderConfiguration.Native;
+﻿using EtwIpGrabber.EtwIntegration.ProviderConfiguration.Abstractions;
+using EtwIpGrabber.EtwIntegration.ProviderConfiguration.Native;
 
-namespace EtwIpGrabber.EtwStructure.ProviderConfiguration
+namespace EtwIpGrabber.EtwIntegration.ProviderConfiguration
 {
     /// <summary>
     /// Implementazione del configuratore per il provider <c>Microsoft-Windows-TCPIP</c>.

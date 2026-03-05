@@ -1,7 +1,7 @@
-﻿using EtwIpGrabber.EtwStructure.SessionManager.Configuration;
+﻿using EtwIpGrabber.EtwIntegration.SessionManager.Configuration;
 using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.SessionManager.Native
+namespace EtwIpGrabber.EtwIntegration.SessionManager.Native
 {
     /// <summary>
     /// Factory responsabile della creazione della struttura nativa

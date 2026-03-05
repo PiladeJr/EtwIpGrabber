@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.SessionManager.Configuration.Implementation
+﻿namespace EtwIpGrabber.EtwIntegration.SessionManager.Configuration.Implementation
 {
     /// <summary>
     /// Factory per la creazione della configurazione ETW

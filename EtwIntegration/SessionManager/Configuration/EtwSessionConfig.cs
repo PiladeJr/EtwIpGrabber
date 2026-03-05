@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.SessionManager.Configuration
+﻿namespace EtwIpGrabber.EtwIntegration.SessionManager.Configuration
 {
     /// <summary>
     /// Rappresenta la configurazione immutabile di una sessione ETW realtime,

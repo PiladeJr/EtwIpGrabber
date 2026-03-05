@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.SessionManager.Abstraction
+﻿namespace EtwIpGrabber.EtwIntegration.SessionManager.Abstraction
 {
     /// <summary>
     /// Definisce l'interfaccia per il controller del lifecycle di una sessione ETW.

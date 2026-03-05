@@ -1,7 +1,7 @@
-﻿using EtwIpGrabber.EtwStructure.MetricsAndHealth;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer;
+﻿using EtwIpGrabber.EtwIntegration.MetricsAndHealth;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
 
-namespace EtwIpGrabber.EtwStructure.EventDispatcher
+namespace EtwIpGrabber.EtwIntegration.EventDispatcher
 {
     /// <summary>
     /// Fornisce un bounded ring buffer per salvare record di eventi. Permette operazioni di enqueue e dequeue in tempo costante, con gestione della concorrenza e tracking degli eventi scartati.

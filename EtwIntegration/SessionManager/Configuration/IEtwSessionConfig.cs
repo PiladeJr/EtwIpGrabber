@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.SessionManager.Configuration
+﻿namespace EtwIpGrabber.EtwIntegration.SessionManager.Configuration
 {
     /// <summary>
     /// Definisce il contratto minimo necessario per la configurazione di una sessione 

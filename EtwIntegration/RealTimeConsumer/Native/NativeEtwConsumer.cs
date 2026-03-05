@@ -1,7 +1,6 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
+namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native
 {
     /// <summary>
     /// Wrapper P/Invoke per le API ETW utilizzate dal consumer realtime.

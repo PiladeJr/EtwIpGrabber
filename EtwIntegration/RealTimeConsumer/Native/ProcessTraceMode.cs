@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
+﻿namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native
 {
     /// <summary>
     /// Valori bitflag usati per configurare la modalità di consumo

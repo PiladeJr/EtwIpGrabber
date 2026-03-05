@@ -1,7 +1,6 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures
+namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct ETW_BUFFER_CONTEXT

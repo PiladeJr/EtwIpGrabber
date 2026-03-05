@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.ProviderConfiguration
+﻿namespace EtwIpGrabber.EtwIntegration.ProviderConfiguration
 {
     /// <summary>
     /// Descrive il provider manifest-based <c>Microsoft-Windows-TCPIP</c>.

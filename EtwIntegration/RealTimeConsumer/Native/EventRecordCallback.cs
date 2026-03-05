@@ -1,7 +1,7 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.RealTimeConsumer.Native
+namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native
 {
     /// <summary>
     /// Delegate invocato da ETW per ogni evento ricevuto dalla sessione realtime.

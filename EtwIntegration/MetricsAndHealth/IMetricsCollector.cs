@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.MetricsAndHealth
+﻿namespace EtwIpGrabber.EtwIntegration.MetricsAndHealth
 {
     public interface IMetricsCollector
     {

@@ -1,7 +1,7 @@
-﻿using EtwIpGrabber.EtwStructure.EventDispatcher;
-using EtwIpGrabber.EtwStructure.MetricsAndHealth;
+﻿using EtwIpGrabber.EtwIntegration.EventDispatcher;
+using EtwIpGrabber.EtwIntegration.MetricsAndHealth;
 
-namespace EtwIpGrabber.EtwStructure
+namespace EtwIpGrabber.EtwIntegration
 {
     public sealed class EtwTelemetryMonitor(BoundedEventRingBuffer buffer, EtwMetricsCollector metrics, ILogger<EtwTelemetryMonitor> logger)
     {

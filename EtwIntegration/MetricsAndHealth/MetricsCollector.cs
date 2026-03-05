@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.MetricsAndHealth
+﻿namespace EtwIpGrabber.EtwIntegration.MetricsAndHealth
 {
     /// <summary>
     /// Implementazione thread-safe del collector di metriche

@@ -1,7 +1,7 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer;
 using System.Collections.Concurrent;
 
-namespace EtwIpGrabber.EtwStructure.EventDispatcher
+namespace EtwIpGrabber.EtwIntegration.EventDispatcher
 {
     /// <summary>
     /// Implementazione base del dispatcher utilizzando <see cref="ConcurrentQueue{T}"/>

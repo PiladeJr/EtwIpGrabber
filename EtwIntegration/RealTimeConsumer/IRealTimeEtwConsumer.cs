@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
+﻿namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer
 {
     /// <summary>
     /// Contratto per il consumo in realtime degli eventi ETW provenienti da

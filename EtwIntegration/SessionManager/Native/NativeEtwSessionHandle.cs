@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.EtwStructure.SessionManager.Native
+﻿namespace EtwIpGrabber.EtwIntegration.SessionManager.Native
 {
     /// <summary>
     /// Separa la gestione dell'handle della sessione ETW.

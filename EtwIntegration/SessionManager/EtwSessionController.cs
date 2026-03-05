@@ -1,9 +1,9 @@
-﻿using EtwIpGrabber.EtwStructure.SessionManager.Abstraction;
-using EtwIpGrabber.EtwStructure.SessionManager.Configuration;
-using EtwIpGrabber.EtwStructure.SessionManager.Native;
+﻿using EtwIpGrabber.EtwIntegration.SessionManager.Abstraction;
+using EtwIpGrabber.EtwIntegration.SessionManager.Configuration;
+using EtwIpGrabber.EtwIntegration.SessionManager.Native;
 using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.SessionManager
+namespace EtwIpGrabber.EtwIntegration.SessionManager
 {
     /// <summary>
     /// Gestisce il lifecycle completo di una ETW realtime session in modo crash-safe,

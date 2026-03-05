@@ -1,10 +1,9 @@
-﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
-using EtwIpGrabber.EtwStructure.EventDispatcher;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native;
-using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.EventDispatcher;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native;
+using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
+namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer
 {
     /// <summary>
     /// Implementa il consumo realtime degli eventi ETW provenienti dalla sessione TCPIP.
@@ -18,6 +17,9 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
     ///   <item><description>inoltro degli eventi alla pipeline interna.</description></item>
     /// </list>
     /// La callback ETW deve essere pinned per evitare invalidazione da parte del GC.
+    /// </remarks>
+    /// <remarks>
+    /// Inizializza una nuova istanza di <see cref="RealtimeEtwConsumer"/>.
     /// </remarks>
     /// <remarks>
     /// <b>Attenzione:</b>
@@ -34,6 +36,7 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
     ///   <item><description>terminazione del processo in ntdll.dll.</description></item>
     /// </list> 
     /// </remarks>
+    /// <param name="dispatcher">Dispatcher per l'accodamento degli eventi ETW.</param>
     public sealed class RealtimeEtwConsumer(IEventDispatcher dispatcher, ILogger<RealtimeEtwConsumer> logger) : IRealtimeEtwConsumer
     {
         private readonly ILogger<RealtimeEtwConsumer> _logger = logger;
@@ -46,7 +49,6 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         private IntPtr _logfilePtr;
 
         private GCHandle _callbackHandle;
-        private bool _disposed;
 
         /// <summary>
         /// Avvia il consumo realtime degli eventi ETW per la sessione specificata.
@@ -54,13 +56,12 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// <param name="sessionName">Nome della sessione ETW a cui collegarsi.</param>
         public unsafe void Start(string sessionName)
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
-
             // Alloca LoggerName (LPWSTR)
             _loggerNamePtr = Marshal.StringToHGlobalUni(sessionName);
 
             //Alloca unmanaged EVENT_TRACE_LOGFILE
-            int size = Marshal.SizeOf<EVENT_TRACE_LOGFILE>();
+            int size = Marshal.SizeOf<EVENT_TRACE_LOGFILE>() +
+                Marshal.SizeOf<TRACE_LOGFILE_HEADER>();
             _logfilePtr = Marshal.AllocHGlobal(size);
 
             Span<byte> span = new((void*)_logfilePtr, size);
@@ -176,21 +177,10 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
         /// </summary>
         public void Dispose()
         {
-            if (_disposed)
-                return;
-
-            _disposed = true;
-
             if (_traceHandle != 0)
             {
                 NativeEtwConsumer.CloseTrace(_traceHandle);
                 _traceHandle = 0;
-            }
-
-            // Attendi il thread di elaborazione
-            if (_processingThread?.IsAlive == true)
-            {
-                _processingThread.Join(TimeSpan.FromSeconds(5));
             }
 
             // ETW non deve più accedere alla memoria prima di liberarla
@@ -210,9 +200,6 @@ namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
             {
                 _callbackHandle.Free();
             }
-
-            _callback = null;
-            _processingThread = null;
         }
     }
 }

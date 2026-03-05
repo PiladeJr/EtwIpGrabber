@@ -1,6 +1,6 @@
-﻿using EtwIpGrabber.EtwStructure.RealTimeConsumer.Native.Structures;
+﻿using EtwIpGrabber.EtwIntegration.RealTimeConsumer.Native.Structures;
 
-namespace EtwIpGrabber.EtwStructure.RealTimeConsumer
+namespace EtwIpGrabber.EtwIntegration.RealTimeConsumer
 {
     /// <summary>
     /// Rappresenta una copia managed-safe di un EVENT_RECORD

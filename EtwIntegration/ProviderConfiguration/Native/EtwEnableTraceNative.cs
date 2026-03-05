@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace EtwIpGrabber.EtwStructure.ProviderConfiguration.Native
+namespace EtwIpGrabber.EtwIntegration.ProviderConfiguration.Native
 {
     /// <summary>
     /// Parametri usati da <c>EnableTraceEx2</c> per configurare l'enablement
