@@ -2,7 +2,7 @@
 using EtwIpGrabber.PersistencyLayer.Repository;
 using EtwIpGrabber.Workers.FanOut;
 
-namespace EtwIpGrabber.Workers
+namespace EtwIpGrabber.Workers.Data
 {
     internal sealed class TcpPersistenceWorker(
         TcpPersistenceChannel channel,

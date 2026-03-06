@@ -1,5 +1,5 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
-using EtwIpGrabber.Utils.ConnectionClassification;
+using EtwIpGrabber.Utils.ConnectionUtility;
 
 namespace EtwIpGrabber.PersistencyLayer.Filters
 {
