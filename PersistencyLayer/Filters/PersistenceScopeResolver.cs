@@ -4,9 +4,8 @@
     {
         public static NetworkScopeFilters Resolve(string[] args)
         {
-            var arg = args.FirstOrDefault(a => 
-                a.StartsWith("--scope=", StringComparison.OrdinalIgnoreCase) ||
-                a.StartsWith("-s=", StringComparison.OrdinalIgnoreCase));
+            var arg = args.FirstOrDefault(a =>
+                a.StartsWith("--scope=", StringComparison.OrdinalIgnoreCase));
 
             if (arg == null)
                 return NetworkScopeFilters.Private; // default
