@@ -34,6 +34,7 @@ namespace EtwIpGrabber.Workers
                         "TCP Lifecycle" +
                         Environment.NewLine + "Process: {Process}" +
                         Environment.NewLine + "{Direction} - {Local}:{LPort} {Arrow} {Remote}:{RPort}" +
+                        Environment.NewLine + "Classification: {Classification}" +
                         Environment.NewLine + "Start: {Start:O}" +
                         Environment.NewLine + "End: {End:O}" +
                         Environment.NewLine + "Duration: {Duration}" +
@@ -47,6 +48,7 @@ namespace EtwIpGrabber.Workers
                         directionArrow,
                         ConversionUtil.FormatIPv4(lifecycle.RemoteIP),
                         lifecycle.RemotePort,
+                        lifecycle.Classification,
                         lifecycle.StartAt,
                         lifecycle.EndAt,
                         lifecycle.Duration,

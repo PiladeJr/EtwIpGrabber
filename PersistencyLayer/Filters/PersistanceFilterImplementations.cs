@@ -1,4 +1,5 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
+using EtwIpGrabber.Utils.ConnectionClassification;
 
 namespace EtwIpGrabber.PersistencyLayer.Filters
 {
@@ -9,7 +10,16 @@ namespace EtwIpGrabber.PersistencyLayer.Filters
 
         public bool ShouldPersist(TcpConnectionLifecycle connection)
         {
-            var scope = (NetworkScopeFilters)(1 << (int)connection.Classification);
+            NetworkScopeFilters scope = connection.Classification switch
+            {
+                NetworkScope.Loopback => NetworkScopeFilters.Loopback,
+                NetworkScope.Private => NetworkScopeFilters.Private,
+                NetworkScope.Public => NetworkScopeFilters.Public,
+                NetworkScope.Multicast => NetworkScopeFilters.Multicast,
+                NetworkScope.Broadcast => NetworkScopeFilters.Broadcast,
+                _ => NetworkScopeFilters.None
+            };
+
             return (_allowed & scope) != 0;
         }
     }
