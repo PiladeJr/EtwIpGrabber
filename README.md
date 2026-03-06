@@ -32,7 +32,19 @@ cose da mettere nel readme:
 	di' che è stata aggiunta una query per visualizzare i dati salvati da int a text, in modo
 	da renderli più facili da interpretare da un punto di vista semantico.
 	la query è presente nell'initialize del db e viene creata solo se non esiste già
-
+# Limitazioni:
+	- il servizio è stato testato solo su Windows 10 e Windows 11. potrebbe non funzionare correttamente su versioni precedenti di Windows. Non funziona su os diversi da windows.
+	- il servizio è stato testato solo con provider TCP. richiede l'integrazione e aggiunta di classi specifiche per provider UDP o altri tipi di provider.
+# Hook per sistemi di analisi:
+	è stata aggiunta un'interfaccia all'interno del progetto per permettere l'integrazione con sistemi di analisi esterni.
+	sono presenti inoltre metodi di hook all'interno della valutazione dei dati, ma sono stati commentati in quanto non è stato aggiunto un 
+	wrapper di implementazione. basta definire il wrapper, decommentare i metodi e sul program, definire
+	l'istanza del wrapper come implementazione dell'interfaccia per avere un hook funzionante.
+# args del servizio:
+	- è stato aggiunto il comando --scope per permettere la definizione di un filtro di persistenza.
+	è possibile scegliere di salvare solo connessioni private, pubbliche, tutte le connessioni o un misto di queste:
+	basta aggiungere durante la creazione del servizio: 
+	sc.exe create EtwIpGrabber binPath= "path\to\service.exe --scope={filter}" start= auto
 # Estensioni future:
 	- mostrare un esempio di come estendere il servizio a più provider. in particolar modo mostrare un esempio effettivo di come aggiungere UDP provider
 	- gli eventi vengono salvati in un buffer concorrente. alcuni eventi potrebbero essere emessi prima di altri. 

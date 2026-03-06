@@ -4,8 +4,41 @@ using EtwIpGrabber.TdhParsing.Normalization.Models;
 
 namespace EtwIpGrabber.Utils.ConnectionExtendedInfo
 {
+    /// <summary>
+    /// Offre metodi di utilità per la classificazione delle connessioni TCP e l'inferenza
+    /// di informazioni aggiuntive.
+    /// </summary>
+    /// <remarks>
+    /// Attualmente la classe offre metodi per:
+    /// <list type="bullet">
+    ///     <item><description>Classificazione della connessione in base agli indirizzi IP locale e remoto.</description></item>
+    ///     <item><description>Determinazione della direzione di una connessione</description></item>
+    ///     <item><description>Inferenza dell'esito finale della connessione TCP</description></item>
+    ///     <item><description>Inferenza dello stadio finale rilevato nel processo di handshake</description></item>
+    /// </list>
+    /// </remarks>
     public static class ConnectionUtils
     {
+        /// <summary>
+        /// Classifica una connessione TCP in base alla tipologia degli indirizzi IP locale e remoto.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// La classificazione avviene analizzando entrambi gli IP (locale e remoto) e applicando
+        /// le seguenti regole di precedenza:
+        /// </para>
+        /// <list type="number">
+        ///     <item><description><see cref="NetworkScope.Loopback"/>: entrambi gli IP sono loopback (127.0.0.0/8).</description></item>
+        ///     <item><description><see cref="NetworkScope.Multicast"/>: almeno uno degli IP è multicast (224.0.0.0/4).</description></item>
+        ///     <item><description><see cref="NetworkScope.Broadcast"/>: almeno uno degli IP è broadcast (255.255.255.255).</description></item>
+        ///     <item><description><see cref="NetworkScope.Public"/>: almeno uno degli IP è pubblico.</description></item>
+        ///     <item><description><see cref="NetworkScope.Private"/>: entrambi gli IP sono privati (RFC 1918).</description></item>
+        ///     <item><description><see cref="NetworkScope.Unknown"/>: nessuna delle condizioni precedenti è soddisfatta.</description></item>
+        /// </list>
+        /// </remarks>
+        /// <param name="localIp">Indirizzo IP locale in formato network byte order (uint).</param>
+        /// <param name="remoteIp">Indirizzo IP remoto in formato network byte order (uint).</param>
+        /// <returns>Lo scope di rete della connessione TCP.</returns>
         public static NetworkScope ClassifyConnection(uint localIp, uint remoteIp)
         {
             NetworkScope local = NetworkClassification.Classify(localIp);
@@ -32,7 +65,50 @@ namespace EtwIpGrabber.Utils.ConnectionExtendedInfo
 
             return NetworkScope.Unknown;
         }
-
+        /// <summary>
+        /// Determina la direzione di una connessione TCP basandosi sugli eventi osservati nel flow e sulla classificazione degli IP.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Il provider ETW <c>Microsoft-Windows-TCPIP</c> non fornisce SEMPRE la direzione
+        /// della connessione. Anzi è molto raro che qesta venga passata come argomento,
+        /// quindi questa viene inferita analizzando:
+        /// </para>
+        /// <list type="bullet">
+        ///     <item><description>Eventi osservati (<c>Connect</c>, <c>Accept</c>, <c>Send</c>, <c>Receive</c>).</description></item>
+        ///     <item><description>Range delle porte (efimere vs well-known).</description></item>
+        ///     <item><description>Uguaglianza degli indirizzi IP.</description></item>
+        /// </list>
+        /// <para>
+        /// <b>Logica di determinazione (in ordine di precedenza):</b>
+        /// </para>
+        /// <list type="number">
+        ///     <item><description><see cref="TcpDirection.Local"/>: l'IP locale e remoto sono identici. Indice di un loopback</description></item>
+        ///     <item><description><see cref="TcpDirection.Outbound"/>: osservato evento <c>Connect</c> (connessione iniziata localmente).</description></item>
+        ///     <item><description><see cref="TcpDirection.Inbound"/>: osservato evento <c>Accept</c> (connessione accettata).</description></item>
+        ///     <item><description><see cref="TcpDirection.Outbound"/>: osservato evento <c>Send</c> prima di <c>Receive</c>.</description></item>
+        ///     <item><description><see cref="TcpDirection.Inbound"/>: osservato evento <c>Receive</c> prima di <c>Send</c>.</description></item>
+        ///     <item>
+        ///         <description>
+        ///             Analisi delle porte:
+        ///             <list type="bullet">
+        ///                 <item><description><see cref="TcpDirection.Outbound"/>: porta locale efimera (≥49152) e porta remota well-known (&lt;49152).</description></item>
+        ///                 <item><description><see cref="TcpDirection.Inbound"/>: porta locale well-known e porta remota efimera.</description></item>
+        ///             </list>
+        ///         </description>
+        ///     </item>
+        ///     <item><description><see cref="TcpDirection.Unknown"/>: nessuna delle condizioni precedenti è soddisfatta.</description></item>
+        /// </list>
+        /// <para>
+        /// <b>Note:</b>
+        /// </para>
+        /// <list type="bullet">
+        ///     <item><description>La soglia delle porte efimere (49152) è quella standard IANA, ma alcuni OS potrebbero usare range diversi.</description></item>
+        ///     <item><description>L'assenza di eventi non implica che non siano avvenuti, ma solo che non sono stati osservati dalla sessione ETW.</description></item>
+        /// </list>
+        /// </remarks>
+        /// <param name="flow">Istanza del flow contenente eventi osservati e chiave di connessione.</param>
+        /// <returns>La direzione della connessione TCP.</returns>
         public static TcpDirection DetermineDirection(TcpFlowInstance flow)
         {
             if (flow.Key.LocalIp == flow.Key.RemoteIp)

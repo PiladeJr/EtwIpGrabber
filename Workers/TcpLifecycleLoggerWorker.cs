@@ -1,5 +1,4 @@
-﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
-using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
+﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
 using EtwIpGrabber.Workers.FanOut;

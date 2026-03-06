@@ -1,30 +1,28 @@
 ﻿using EtwIpGrabber.PersistencyLayer.Filters;
 using EtwIpGrabber.PersistencyLayer.Repository;
-using EtwIpGrabber.Workers.FanOut;
 
 namespace EtwIpGrabber.Workers.Data
 {
-    internal sealed class TcpPersistenceWorker(
-        TcpPersistenceChannel channel,
+    internal sealed class TcpFlowPersistenceWorker(
+        TcpFlowPersistenceChannel channel,
         ITcpConnectionRepository repo,
         IPersistenceFilter filter,
-        ILogger<TcpPersistenceWorker> logger)
+        ILogger<TcpFlowPersistenceWorker> logger)
         : BackgroundService
     {
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            await foreach (var lifecycle in channel.Channel.Reader.ReadAllAsync(stoppingToken))
+            await foreach (var flow in channel.Channel.Reader.ReadAllAsync(stoppingToken))
             {
                 try
                 {
-                    if (!filter.ShouldPersist(lifecycle))
-                        continue;
-
-                    await repo.InsertLifecycleAsync(lifecycle, stoppingToken);
+                    if (!filter.ShouldPersistFlow(flow))
+                        return;
+                    await repo.UpsertFlowAsync(flow, stoppingToken);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to persist lifecycle");
+                    logger.LogError(ex, "Failed to persist flow");
                 }
             }
         }

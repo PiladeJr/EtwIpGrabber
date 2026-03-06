@@ -145,13 +145,17 @@ builder.Services.AddSingleton(
     new TcpPersistenceChannel(
         Channel.CreateBounded<TcpConnectionLifecycle>(50000)));
 
+builder.Services.AddSingleton(
+    new TcpFlowPersistenceChannel(
+        Channel.CreateBounded<TcpFlowInstance>(100000)));
+
 //------------------ Workers ------------------
 builder.Services.AddHostedService<DbInitializerWorker>();
 builder.Services.AddHostedService<EtwCollectionWorker>();
 builder.Services.AddHostedService<TcpParseWorker>();
 builder.Services.AddHostedService<TcpLifecycleWorker>();
 builder.Services.AddHostedService<TcpLifecycleFanOutWorker>();
-builder.Services.AddHostedService<TcpPersistenceWorker>();
+builder.Services.AddHostedService<TcpLifecyclePersistenceWorker>();
 builder.Services.AddHostedService<TcpLifecycleLoggerWorker>();
 
 //------------------ Logging ------------------

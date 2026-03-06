@@ -22,5 +22,20 @@ namespace EtwIpGrabber.PersistencyLayer.Filters
 
             return (_allowed & scope) != 0;
         }
+
+        public bool ShouldPersistFlow(TcpFlowInstance flow)
+        {
+            NetworkScopeFilters scope = flow.Classification switch
+            {
+                NetworkScope.Loopback => NetworkScopeFilters.Loopback,
+                NetworkScope.Private => NetworkScopeFilters.Private,
+                NetworkScope.Public => NetworkScopeFilters.Public,
+                NetworkScope.Multicast => NetworkScopeFilters.Multicast,
+                NetworkScope.Broadcast => NetworkScopeFilters.Broadcast,
+                _ => NetworkScopeFilters.None
+            };
+
+            return (_allowed & scope) != 0;
+        }
     }
 }
