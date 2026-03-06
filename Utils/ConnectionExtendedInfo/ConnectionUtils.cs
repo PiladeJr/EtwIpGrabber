@@ -2,7 +2,7 @@
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
 
-namespace EtwIpGrabber.Utils.ConnectionUtility
+namespace EtwIpGrabber.Utils.ConnectionExtendedInfo
 {
     public static class ConnectionUtils
     {
