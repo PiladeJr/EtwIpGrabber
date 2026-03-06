@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.Utils.ConnectionClassification
+﻿namespace EtwIpGrabber.Utils.ConnectionUtility
 {
     /// <summary>
     /// Classe di utilità per la classificazione delle reti, basata su indirizzi IP.

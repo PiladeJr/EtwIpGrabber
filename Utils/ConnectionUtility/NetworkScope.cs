@@ -1,4 +1,4 @@
-﻿namespace EtwIpGrabber.Utils.ConnectionClassification
+﻿namespace EtwIpGrabber.Utils.ConnectionUtility
 {
     public enum NetworkScope : byte 
     {

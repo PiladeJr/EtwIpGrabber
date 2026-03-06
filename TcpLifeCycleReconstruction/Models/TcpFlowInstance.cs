@@ -1,5 +1,6 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
+using EtwIpGrabber.Utils.ConnectionUtility;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {
@@ -9,6 +10,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
     {
         public readonly TcpFlowKey Key = key;
         public string ProcessName = firstEvent.ProcessName;
+        public NetworkScope Classification = ConnectionUtils.ClassifyConnection(key.LocalIp, key.RemoteIp);
 
         public readonly DateTime FirstSeenUtc = firstEvent.TimestampUtc;
         public DateTime LastSeenUtc = firstEvent.TimestampUtc;
@@ -18,7 +20,7 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
         public string CommunityId = string.Empty;
 
         // Tutti i flag degli eventi osservabili per questa connessione TCP.
-        public bool SeenConnect;
+            public bool SeenConnect;
             public bool SeenAccept;
             public bool SeenSend;
             public bool SeenReceive;

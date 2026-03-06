@@ -1,6 +1,6 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
-using EtwIpGrabber.Utils.ConnectionClassification;
+using EtwIpGrabber.Utils.ConnectionUtility;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Models
 {

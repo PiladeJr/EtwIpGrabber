@@ -1,8 +1,6 @@
 ﻿using EtwIpGrabber.TcpLifeCycleReconstruction.Abstractions;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
-using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
-using EtwIpGrabber.TdhParsing.Normalization.Models;
-using EtwIpGrabber.Utils.ConnectionClassification;
+using EtwIpGrabber.Utils.ConnectionUtility;
 
 namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
 {
@@ -41,157 +39,18 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Finalization
                 RemoteIP = flow.Key.RemoteIp,
                 RemotePort = flow.Key.RemotePort,
 
-                Direction = DetermineDirection(flow),
-                Classification = ClassifyConnection(flow.Key.LocalIp,flow.Key.RemoteIp),
+                Direction = ConnectionUtils.DetermineDirection(flow),
+                Classification = ConnectionUtils.ClassifyConnection(flow.Key.LocalIp,flow.Key.RemoteIp),
 
                 StartAt = startAt,
                 EndAt = endAt,
                 Duration = duration,
 
-                Outcome = DetermineOutcome(flow),
-                Handshake = DetermineStage(flow),
+                Outcome = ConnectionUtils.DetermineOutcome(flow),
+                Handshake = ConnectionUtils.DetermineStage(flow),
 
                 CommunityId = CommunityId
             };
-        }
-        /// <summary>
-        /// Determina l'esito finale della connessione TCP in base agli eventi osservati nel flow.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// Il provider ETW <c>Microsoft-Windows-TCPIP</c> non espone direttamente gli stati TCP
-        /// (<c>SYN</c>, <c>SYN-ACK</c>, <c>ACK</c>), quindi l'esito viene dedotto
-        /// inferenzialmente dalla sequenza di eventi.
-        /// </para>
-        /// <para>Regole utilizzate:</para>
-        /// <list type="bullet">
-        ///   <item><description><see cref="TcpConnectionOutcome.Closed">Closed: </see><c>Connect → Accept → Close</c>.</description></item>
-        ///   <item><description><see cref="TcpConnectionOutcome.Aborted">Aborted: </see><c>Connect → Accept → Disconnect</c>.</description></item>
-        ///   <item><description><see cref="TcpConnectionOutcome.Refused">Refused: </see><c>Connect → Disconnect</c> senza <c>Accept</c>.</description></item>
-        ///   <item><description><see cref="TcpConnectionOutcome.Timeout">Timeout: </see>flow terminato dal timeout sweeper.</description></item>
-        ///   <item><description><see cref="TcpConnectionOutcome.Established">Established: </see>connessione stabilita senza evento di chiusura osservato.</description></item>
-        ///   <item><description><see cref="TcpConnectionOutcome.Unknown">Unknown: </see>sequenza incompleta o non classificabile.</description></item>
-        /// </list>
-        /// <b>Edge case:</b>
-        /// <para>
-        /// Un flusso che mostra solo <c>Connect</c> e <c>Disconnect</c> senza <c>Accept</c>
-        /// potrebbe rappresentare un tentativo di connessione interrotto prematuramente:
-        /// </para>
-        /// <list type="bullet">
-        ///     <item><description>un app che chiude il socket immediatamente.</description></item>
-        ///     <item><description>un handshake abortito localmente</description></item>
-        /// </list>
-        /// Interpreto questo caso come <see cref="TcpConnectionOutcome.Aborted"> Aborted</see> piuttosto che <see cref="TcpConnectionOutcome.Refused"> Refused</see>,
-        /// </remarks>
-        /// <param name="flow">Istanza di flow contenente stato e flag osservati durante il lifecycle.</param>
-        /// <returns>L'esito finale della connessione TCP.</returns>
-        private static TcpConnectionOutcome DetermineOutcome(TcpFlowInstance flow)
-        {
-            // traffico dati => connessione riuscita
-            if (flow.SeenSend || flow.SeenReceive)
-            {
-                if (flow.SeenDisconnect)
-                    return TcpConnectionOutcome.Closed;
-
-                return TcpConnectionOutcome.Established;
-            }
-
-            // handshake lato server
-            if (flow.SeenAccept)
-            {
-                if (flow.SeenDisconnect)
-                    return TcpConnectionOutcome.Closed;
-
-                return TcpConnectionOutcome.Established;
-            }
-
-            // tentativo rifiutato
-            if (flow.SeenConnect && flow.SeenDisconnect)
-                return TcpConnectionOutcome.Refused;
-
-            // errore TCP
-            if (flow.SeenFail)
-                return TcpConnectionOutcome.Aborted;
-
-            // timeout gestito dallo sweeper
-            if (flow.State == TcpLifecycleState.TimedOut)
-                return TcpConnectionOutcome.Timeout;
-
-            // edge case: host irraggiungibile o firewall drop
-            if (flow.SeenRetransmit && !flow.SeenReceive && !flow.SeenSend)
-                return TcpConnectionOutcome.Timeout;
-
-            return TcpConnectionOutcome.Unknown;
-        }
-
-        private static TcpHandshakeStage DetermineStage(TcpFlowInstance flow)
-        {
-            if (flow.SeenDisconnect)
-                return TcpHandshakeStage.Closing;
-
-            if (flow.SeenSend || flow.SeenReceive || flow.SeenAccept)
-                return TcpHandshakeStage.Established;
-
-            if (flow.SeenConnect)
-                return TcpHandshakeStage.SynSent;
-
-            return TcpHandshakeStage.None;
-        }
-
-        private static TcpDirection DetermineDirection(TcpFlowInstance flow)
-        {
-            if (flow.Key.LocalIp == flow.Key.RemoteIp)
-                return TcpDirection.Local;
-
-            if (flow.SeenConnect)
-                return TcpDirection.Outbound;
-
-            if (flow.SeenAccept)
-                return TcpDirection.Inbound;
-
-            if (flow.SeenSend)
-                return TcpDirection.Outbound;
-
-            if (flow.SeenReceive)
-                return TcpDirection.Inbound;
-
-            bool localEphemeral = flow.Key.LocalPort >= 49152;
-            bool remoteEphemeral = flow.Key.RemotePort >= 49152;
-
-            if (localEphemeral && !remoteEphemeral)
-                return TcpDirection.Outbound;
-
-            if (!localEphemeral && remoteEphemeral)
-                return TcpDirection.Inbound;
-
-            return TcpDirection.Unknown;
-        }
-
-        private static NetworkScope ClassifyConnection(uint LocalIp, uint RemoteIp) {
-
-            NetworkScope local =  NetworkClassification.Classify(LocalIp);
-            NetworkScope remote = NetworkClassification.Classify(RemoteIp);
-
-            // loopback puro: 127.0.0.0 -> 127.0.0.0
-            if (local == NetworkScope.Loopback && remote == NetworkScope.Loopback)
-                return NetworkScope.Loopback;
-
-            // multicast o broadcast: 
-            if (local == NetworkScope.Multicast || remote == NetworkScope.Multicast)
-                return NetworkScope.Multicast;
-
-            if (local == NetworkScope.Broadcast || remote == NetworkScope.Broadcast)
-                return NetworkScope.Broadcast;
-
-            // internet: almeno uno dei due è pubblico
-            if (local == NetworkScope.Public || remote == NetworkScope.Public)
-                return NetworkScope.Public;
-
-            // LAN: entrambe devono essere private
-            if (local == NetworkScope.Private && remote == NetworkScope.Private)
-                return NetworkScope.Private;
-
-            return NetworkScope.Unknown;
         }
     }
 }

@@ -29,6 +29,7 @@ using EtwIpGrabber.TdhParsing.Normalization.Models;
 using EtwIpGrabber.Utils.CommunityIdResolver;
 using EtwIpGrabber.Utils.ProcessNameResolver;
 using EtwIpGrabber.Workers;
+using EtwIpGrabber.Workers.Data;
 using EtwIpGrabber.Workers.FanOut;
 using Microsoft.Extensions.Logging.EventLog;
 using System.Threading.Channels;
@@ -127,6 +128,7 @@ builder.Services.AddSingleton<CommunityIDGenerator>();
 
 //------------------ Persistence layer -------------------
 
+builder.Services.AddSingleton<DatabaseInitializer>();
 builder.Services.AddSingleton<ITcpConnectionRepository, TcpConnectionRepository>();
 
 // filtro di persistenza: esclude tutte le connessioni non private 
@@ -145,6 +147,7 @@ builder.Services.AddSingleton(
         Channel.CreateBounded<TcpConnectionLifecycle>(50000)));
 
 //------------------ Workers ------------------
+builder.Services.AddHostedService<DbInitializerWorker>();
 builder.Services.AddHostedService<EtwCollectionWorker>();
 builder.Services.AddHostedService<TcpParseWorker>();
 builder.Services.AddHostedService<TcpLifecycleWorker>();

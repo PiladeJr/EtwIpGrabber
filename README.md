@@ -1,39 +1,46 @@
-# EtwIpGrabber
+cose da mettere nel readme:
 
-Tool per monitorare eventi TCP/IP dal kernel Windows via ETW e ricostruire lifecycle di connessioni.
+# Overview:
+	il progetto è un servizio che utilizza ETW per monitorare le connessioni TCP in tempo reale.
+	deve essere integrato con un sistema esistente di analisi delle connessioni e sostituire un meccanismo di parsing di netscan.
 
-## Caratteristiche principali
+# Struttura
 
-- Worker service .NET 8 che sottoscrive il provider kernel `NetworkTCPIP`.
-- Parsing robusto degli eventi (Connect/Accept/Send/Recv/Disconnect).
-- Note operative e rischi raccolti in `NOTES.md` (lossy telemetry, schema changes, PID reuse, ecc.).
+	il progetto è diviso in 4 moduli + moduli di utilità: 
+		- etw_implementation: controller, provider injection, session manager e consumer real time.
+		- tdh_parsing: recupero dei metadati, definizione di una struttura per il provider, parsing sequenziale e normalizzazione dei dati.
+		- lifecycle reconstruction: logica di ricostruzione di una connessione con meccanismi di 
+		 definizione degli eventi di inizio e fine di una connessione 
+		 (se in corso, chiusa, negata, timed out,...). stato dell'handshake TCP alla fine del ciclo vita 
+		 direzione della connessione (inbound o outbound), durata della connessione, ecc.
+		- db: contiene la logica per la gestione del database SQLite, inclusa la creazione del database e delle tabelle, e l'inserimento dei dati e visualizzazioni custom
+		- service di utilità:
+			- generazione community ID di una connessione da 5 tuple (src ip, src port, dst ip, dst port, protocol)
+			- resolver del process name dal suo id.
+			- classificazione di una connessione (interne, esterne, loopback,...)
+			- filtri per db di persistenza dei dati: di default vengono salvati solo connessioni private. è possibile configurare il filtro per avere connessioni pubbliche, loopback, tutte le connessioni, ecc.
+# Logica di funzionamento del servizio:
+	dopo aver spiegato come è strutturato il progetto, spiega la logica di funzionamento del servizio,
+	ripercorrendo i passaggi principali che avvengono dall'avvio del servizio:
+		etw startup -> emissione di eventi -> parsing dei dati -> ricostruzione del ciclo di connessione e salvataggio in db in parallelo.
+		per ogni fase , spiega brevemente cosa accade, cosa cambia durante le varie fasi e cosa ottengo in output. senza entrare troppo nei dettagli. 
+# Richiami alla documentazione presente per ogni fase.
+	non spiegare ogni singolo punto delle varie fasi nello specifico. il funzionamento di ogni step 
+	principale è spiegato in dettaglio nei file presenti nella cartella docs. 
+	è possibile consultare la documentazione per ogni fase per avere una spiegazione più dettagliata di ogni step.
+# Query di visualizzazione:
+	di' che è stata aggiunta una query per visualizzare i dati salvati da int a text, in modo
+	da renderli più facili da interpretare da un punto di vista semantico.
+	la query è presente nell'initialize del db e viene creata solo se non esiste già
 
-## Architecture
+# Estensioni future:
+	- mostrare un esempio di come estendere il servizio a più provider. in particolar modo mostrare un esempio effettivo di come aggiungere UDP provider
+	- gli eventi vengono salvati in un buffer concorrente. alcuni eventi potrebbero essere emessi prima di altri. 
+	risultato, potrei vedere eventi accept o close prima di un connect. dipende dall'ordine in cui
+	etw riceve ed emette gli eventi. non è un bug e ci sono meccanismi per la ricostruzione dei cicli di connessione.
+	magari occorre implementare un meccanismo di ordinamento degli eventi emessi dal buffer per rendere la
+	visualizzazione più coerente e di più facile interpretazione.
+	- integrare un sistema di visualizzazione dei dati in colonna che sostituisca i log di eventi windows.
+	magari una visualizzazione da terminale ogni volta che viene chiamato il comando del servizio. (aggiungere un comando custom).
 
-Mappa delle componenti: elenco dei "package" (cartelle/namespace) che hai creato nel progetto e che per ora non contengono ancora file di implementazione. Qui rappresentiamo solo queste componenti, come richiesto.
 
-- `EtwStructure/SessionManager` — gestione delle sessioni ETW (creazione, riavvio, limitazioni buffer).
-- `EtwStructure/ProviderConfiguration` — configurazioni e metadati dei provider ETW (manifests, mapping campi, versioning).
-- `EtwStructure/RealTimeConsumer` — consumer real-time che elabora eventi per ricostruzione lifecycle e output immediato.
-- `EtwStructure/EventDispatcher` — dispatcher centrale per inoltrare eventi ETW ai consumer interni.
-- `EtwStructure/Metrics&Health` — raccolta metriche, health checks e monitoring della sessione ETW.
-
-Prerequisiti
-
-- Windows (ETW kernel provider)
-- .NET 8 SDK
-- Eseguire con privilegi Administrator (ETW session richiede elevazione)
-
-Build & esecuzione
-
-1. Costruire il progetto:
-
-   dotnet build
-
-Uso
-
-Troubleshooting
-
-- Se non vedi output markdown in anteprima per `NOTES.md`, assicurati che il file abbia estensione `.md` (già presente) e che l'editor supporti la preview (VS Code: `Ctrl+Shift+V`).
-- Verifica i privilegi: `TraceEventSession.IsElevated()` deve restituire true.
-- Controlla che non esistano sessioni ETW concorrenti che possono interferire.
