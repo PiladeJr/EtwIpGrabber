@@ -1,4 +1,4 @@
-﻿using EtwIpGrabber.Utils.ConnectionUtility;
+﻿using EtwIpGrabber.Utils.ConnectionExtendedInfo;
 
 namespace EtwIpGrabber.PersistencyLayer.Filters
 {

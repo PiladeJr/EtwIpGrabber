@@ -115,6 +115,7 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
             CREATE VIEW IF NOT EXISTS v_tcp_lifecycle_readable AS
             SELECT
                 id,
+                source_table,
                 community_id,
                 process_id,
                 process_name,
@@ -125,6 +126,8 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
                 start_at,
                 end_at,
                 duration,
+                weekday,
+                hour,
 
                 CASE outcome
                     WHEN 0 THEN 'Closed'
@@ -151,7 +154,8 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
                     ELSE 'Unknown'
                 END AS direction
 
-            FROM tcp_lifecycle;
+            FROM v_all_tcp_lifecycle;
+            
 
             CREATE VIEW IF NOT EXISTS v_all_tcp_lifecycle AS
 

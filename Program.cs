@@ -36,7 +36,7 @@ using System.Threading.Channels;
 
 var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddWindowsService();
-
+var persistenceScope = PersistenceScopeResolver.Resolve(args);
 
 // metrics singleton
 builder.Services.AddSingleton<EtwMetricsCollector>();
@@ -133,8 +133,7 @@ builder.Services.AddSingleton<ITcpConnectionRepository, TcpConnectionRepository>
 
 // filtro di persistenza: esclude tutte le connessioni non private 
 builder.Services.AddSingleton<IPersistenceFilter>(
-    new NetworkScopePersistenceFilter(
-        NetworkScopeFilters.Private));
+    new NetworkScopePersistenceFilter(persistenceScope));
 
 //------------------ Channel Workers ------------------
 
