@@ -13,6 +13,11 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
 
             cmd.CommandText =
             """
+            PRAGMA journal_mode=WAL;
+            PRAGMA synchronous=NORMAL;
+            PRAGMA temp_store=MEMORY;
+            PRAGMA cache_size=-20000;
+
             CREATE TABLE IF NOT EXISTS tcp_flows(
                 community_id TEXT PRIMARY KEY,
                 process_id INTEGER,

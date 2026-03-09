@@ -154,6 +154,7 @@ builder.Services.AddHostedService<DbInitializerWorker>();
 builder.Services.AddHostedService<EtwCollectionWorker>();
 builder.Services.AddHostedService<TcpParseWorker>();
 builder.Services.AddHostedService<TcpLifecycleWorker>();
+builder.Services.AddHostedService<TcpFlowPersistenceWorker>();
 builder.Services.AddHostedService<TcpLifecycleFanOutWorker>();
 builder.Services.AddHostedService<TcpLifecyclePersistenceWorker>();
 builder.Services.AddHostedService<TcpLifecycleLoggerWorker>();

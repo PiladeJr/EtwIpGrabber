@@ -19,7 +19,7 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
 
             cmd.CommandText =
                 $"""
-                INSERT INTO {table}
+                INSERT INTO tcp_flows
                 (community_id, process_id, process_name,
                  local_ip, local_port,
                  remote_ip, remote_port,
@@ -42,10 +42,10 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
             cmd.Parameters.AddWithValue("$pid", flow.Key.ProcessId);
             cmd.Parameters.AddWithValue("$pname", flow.ProcessName);
 
-            cmd.Parameters.AddWithValue("$lip", flow.Key.LocalIp);
+            cmd.Parameters.AddWithValue("$lip", ConversionUtil.FormatIPv4(flow.Key.LocalIp));
             cmd.Parameters.AddWithValue("$lport", flow.Key.LocalPort);
 
-            cmd.Parameters.AddWithValue("$rip", flow.Key.RemoteIp);
+            cmd.Parameters.AddWithValue("$rip", ConversionUtil.FormatIPv4(flow.Key.RemoteIp));
             cmd.Parameters.AddWithValue("$rport", flow.Key.RemotePort);
 
             cmd.Parameters.AddWithValue("$first", flow.FirstSeenUtc);
