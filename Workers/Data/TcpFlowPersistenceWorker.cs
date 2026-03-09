@@ -16,8 +16,9 @@ namespace EtwIpGrabber.Workers.Data
             {
                 try
                 {
-                    if (!filter.ShouldPersistFlow(flow))
-                        return;
+                   // if (!filter.ShouldPersistFlow(flow))
+                   //     continue;
+                        
                     await repo.UpsertFlowAsync(flow, stoppingToken);
                 }
                 catch (Exception ex)
