@@ -27,6 +27,7 @@ using EtwIpGrabber.TdhParsing.Metadata.Abstract;
 using EtwIpGrabber.TdhParsing.Normalization;
 using EtwIpGrabber.TdhParsing.Normalization.Models;
 using EtwIpGrabber.Utils.CommunityIdResolver;
+using EtwIpGrabber.Utils.ConnectionExtendedInfo.LocalRemoteInversion;
 using EtwIpGrabber.Utils.ProcessNameResolver;
 using EtwIpGrabber.Workers;
 using EtwIpGrabber.Workers.Data;
@@ -129,6 +130,8 @@ builder.Services.AddSingleton<CommunityIDGenerator>();
 
 //------------------ Persistence layer -------------------
 
+builder.Services.AddSingleton<LocalAddressCache>();
+builder.Services.AddSingleton<LifecycleEndpointNormalizer>();
 builder.Services.AddSingleton<DatabaseInitializer>();
 builder.Services.AddSingleton<ITcpConnectionRepository, TcpConnectionRepository>();
 
