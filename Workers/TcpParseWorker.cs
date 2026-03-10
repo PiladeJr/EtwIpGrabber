@@ -9,10 +9,14 @@ namespace EtwIpGrabber.Workers
     internal sealed class TcpParseWorker(
         BoundedEventRingBuffer buffer,
         ITcpEtwParser parser,
-        Channel<TcpEvent> channel
-        //,ILogger<TcpParseWorker> logger
+        Channel<TcpEvent> channel,
+        ILogger<TcpParseWorker> logger
         ): BackgroundService
     {
+        private long _eventsDequeued;
+        private long _eventsEnqueued;
+        private long _eventsDropped;
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             try {
@@ -24,8 +28,13 @@ namespace EtwIpGrabber.Workers
                         continue;
                     }
 
+                    Interlocked.Increment(ref _eventsDequeued);
+
                     if (!parser.TryParse(snapshot, out var tcp))
+                    {
+                        Interlocked.Increment(ref _eventsDropped);
                         continue;
+                    }
 /*
                     logger.LogInformation(
                     @"TCP {EventType}
@@ -46,6 +55,7 @@ namespace EtwIpGrabber.Workers
                         tcp.TimestampUtc)
 */                    
                     await channel.Writer.WriteAsync(tcp!, stoppingToken);
+                    Interlocked.Increment(ref _eventsEnqueued);
                 }
             }
             catch (TaskCanceledException)
@@ -56,6 +66,12 @@ namespace EtwIpGrabber.Workers
         }
         public override async Task StopAsync(CancellationToken cancellationToken)
         {
+            logger.LogInformation(
+                "TcpParseWorker shutdown stats - Dequeued from buffer: {Dequeued}, Enqueued to channel: {Enqueued}, Dropped (parse failed): {Dropped}",
+                _eventsDequeued,
+                _eventsEnqueued,
+                _eventsDropped);
+
             channel.Writer.TryComplete();
             await base.StopAsync(cancellationToken);
         }

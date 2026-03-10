@@ -40,6 +40,7 @@ var persistenceScope = PersistenceScopeResolver.Resolve(args);
 
 // metrics singleton
 builder.Services.AddSingleton<EtwMetricsCollector>();
+builder.Services.AddSingleton<IMetricsCollector>(sp => sp.GetRequiredService<EtwMetricsCollector>());
 
 // dispatcher singleton
 builder.Services.AddSingleton<BoundedEventRingBuffer>(sp =>
