@@ -51,20 +51,6 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
                 direction INTEGER
             );
 
-            CREATE TABLE IF NOT EXISTS internal_tcp_flows(
-                community_id TEXT PRIMARY KEY,
-                process_id INTEGER,
-                process_name TEXT,
-                local_ip TEXT,
-                local_port INTEGER,
-                remote_ip TEXT,
-                remote_port INTEGER,
-                first_seen TEXT,
-                last_seen TEXT,
-                flags INTEGER,
-                state INTEGER
-            );
-
             CREATE TABLE IF NOT EXISTS internal_tcp_lifecycle(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 community_id TEXT,
@@ -82,20 +68,6 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
                 outcome INTEGER,
                 handshake INTEGER,
                 direction INTEGER
-            );
-
-            CREATE TABLE IF NOT EXISTS public_tcp_flows(
-                community_id TEXT PRIMARY KEY,
-                process_id INTEGER,
-                process_name TEXT,
-                local_ip TEXT,
-                local_port INTEGER,
-                remote_ip TEXT,
-                remote_port INTEGER,
-                first_seen TEXT,
-                last_seen TEXT,
-                flags INTEGER,
-                state INTEGER
             );
 
             CREATE TABLE IF NOT EXISTS public_tcp_lifecycle(

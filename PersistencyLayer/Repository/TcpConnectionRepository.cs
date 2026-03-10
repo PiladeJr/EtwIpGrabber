@@ -2,11 +2,12 @@
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models;
 using EtwIpGrabber.TcpLifeCycleReconstruction.Models.Enumerations;
 using EtwIpGrabber.TdhParsing.Normalization;
+using EtwIpGrabber.Utils.ConnectionExtendedInfo.LocalRemoteInversion;
 using Microsoft.Data.Sqlite;
 
 namespace EtwIpGrabber.PersistencyLayer.Repository
 {
-    internal sealed class TcpConnectionRepository : ITcpConnectionRepository
+    internal sealed class TcpConnectionRepository(LifecycleEndpointNormalizer normalizer) : ITcpConnectionRepository
     {
         public async Task UpsertFlowAsync(TcpFlowInstance flow, CancellationToken ct)
         {
@@ -21,7 +22,6 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
             }
 
             var cmd = conn.CreateCommand();
-            var table = TableResolver.FlowTable(flow.Classification);
 
             cmd.CommandText =
                 $"""
@@ -87,7 +87,7 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
 
                 cmd.CommandText =
                     """
-                    INSERT INTO $table
+                    INSERT INTO tcp_flows
                     (community_id, process_id, process_name,
                      local_ip, local_port,
                      remote_ip, remote_port,
@@ -107,7 +107,6 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
                     """;
 
                 // Prepara i parametri una sola volta (riusati per ogni row)
-                var pTable = cmd.Parameters.Add("$table", SqliteType.Text);
                 var pCid = cmd.Parameters.Add("$cid", SqliteType.Text);
                 var pPid = cmd.Parameters.Add("$pid", SqliteType.Integer);
                 var pPname = cmd.Parameters.Add("$pname", SqliteType.Text);
@@ -124,8 +123,6 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
 
                 foreach (var flow in flows)
                 {
-                    var table = TableResolver.FlowTable(flow.Classification);
-                    pTable.Value = table;
                     pCid.Value = flow.CommunityId;
                     pPid.Value = flow.Key.ProcessId;
                     pPname.Value = flow.ProcessName;
@@ -154,6 +151,8 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
             TcpConnectionLifecycle lifecycle,
             CancellationToken ct)
         {
+            lifecycle = normalizer.Normalize(lifecycle);
+
             await using var conn = new SqliteConnection(DbConfig.ConnectionString);
             await conn.OpenAsync(ct);
             
