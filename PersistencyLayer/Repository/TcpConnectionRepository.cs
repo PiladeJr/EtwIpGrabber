@@ -14,6 +14,12 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
 
             await conn.OpenAsync(ct);
 
+            await using (var pragma = conn.CreateCommand())
+            {
+                pragma.CommandText = "PRAGMA synchronous=NORMAL; PRAGMA temp_store=MEMORY;";
+                await pragma.ExecuteNonQueryAsync(ct);
+            }
+
             var cmd = conn.CreateCommand();
             var table = TableResolver.FlowTable(flow.Classification);
 
@@ -55,6 +61,93 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
             cmd.Parameters.AddWithValue("$state", (int)flow.State);
 
             await cmd.ExecuteNonQueryAsync(ct);
+        }
+
+        public async Task UpsertFlowBatchAsync(
+            IReadOnlyList<TcpFlowInstance> flows, CancellationToken ct)
+        {
+            if (flows.Count == 0) return;
+
+            await using var conn = new SqliteConnection(DbConfig.ConnectionString);
+            await conn.OpenAsync(ct);
+
+            // PRAGMA di sessione: enforced su questa connessione
+            await using (var pragma = conn.CreateCommand())
+            {
+                pragma.CommandText = "PRAGMA synchronous=NORMAL; PRAGMA temp_store=MEMORY;";
+                await pragma.ExecuteNonQueryAsync(ct);
+            }
+
+            await using var tx = await conn.BeginTransactionAsync(ct);
+
+            try
+            {
+                await using var cmd = conn.CreateCommand();
+                cmd.Transaction = (SqliteTransaction)tx;
+
+                cmd.CommandText =
+                    """
+                    INSERT INTO $table
+                    (community_id, process_id, process_name,
+                     local_ip, local_port,
+                     remote_ip, remote_port,
+                     first_seen, last_seen,
+                     flags, state)
+                    VALUES
+                    ($cid,$pid,$pname,
+                     $lip,$lport,
+                     $rip,$rport,
+                     $first,$last,
+                     $flags,$state)
+                    ON CONFLICT(community_id)
+                    DO UPDATE SET
+                        last_seen = excluded.last_seen,
+                        flags     = excluded.flags,
+                        state     = excluded.state
+                    """;
+
+                // Prepara i parametri una sola volta (riusati per ogni row)
+                var pTable = cmd.Parameters.Add("$table", SqliteType.Text);
+                var pCid = cmd.Parameters.Add("$cid", SqliteType.Text);
+                var pPid = cmd.Parameters.Add("$pid", SqliteType.Integer);
+                var pPname = cmd.Parameters.Add("$pname", SqliteType.Text);
+                var pLip = cmd.Parameters.Add("$lip", SqliteType.Text);
+                var pLport = cmd.Parameters.Add("$lport", SqliteType.Integer);
+                var pRip = cmd.Parameters.Add("$rip", SqliteType.Text);
+                var pRport = cmd.Parameters.Add("$rport", SqliteType.Integer);
+                var pFirst = cmd.Parameters.Add("$first", SqliteType.Text);
+                var pLast = cmd.Parameters.Add("$last", SqliteType.Text);
+                var pFlags = cmd.Parameters.Add("$flags", SqliteType.Integer);
+                var pState = cmd.Parameters.Add("$state", SqliteType.Integer);
+
+                await cmd.PrepareAsync(ct); // compilazione query una sola volta
+
+                foreach (var flow in flows)
+                {
+                    var table = TableResolver.FlowTable(flow.Classification);
+                    pTable.Value = table;
+                    pCid.Value = flow.CommunityId;
+                    pPid.Value = flow.Key.ProcessId;
+                    pPname.Value = flow.ProcessName;
+                    pLip.Value = ConversionUtil.FormatIPv4(flow.Key.LocalIp);
+                    pLport.Value = flow.Key.LocalPort;
+                    pRip.Value = ConversionUtil.FormatIPv4(flow.Key.RemoteIp);
+                    pRport.Value = flow.Key.RemotePort;
+                    pFirst.Value = flow.FirstSeenUtc;
+                    pLast.Value = flow.LastSeenUtc;
+                    pFlags.Value = BuildFlags(flow);
+                    pState.Value = (int)flow.State;
+
+                    await cmd.ExecuteNonQueryAsync(ct);
+                }
+
+                await tx.CommitAsync(ct);
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
         }
 
         public async Task InsertLifecycleAsync(

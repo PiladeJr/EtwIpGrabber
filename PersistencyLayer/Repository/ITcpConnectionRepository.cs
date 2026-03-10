@@ -5,7 +5,7 @@ namespace EtwIpGrabber.PersistencyLayer.Repository
     public interface ITcpConnectionRepository
     {
         Task UpsertFlowAsync(TcpFlowInstance flow, CancellationToken ct);
-
         Task InsertLifecycleAsync(TcpConnectionLifecycle lifecycle, CancellationToken ct);
+        Task UpsertFlowBatchAsync(IReadOnlyList<TcpFlowInstance> flows, CancellationToken ct);
     }
 }

@@ -30,7 +30,11 @@ namespace EtwIpGrabber.TcpLifeCycleReconstruction.Reconstruction
 
             var shouldFinalize = flow.Apply(evt);
 
-            _flowChannel.Channel.Writer.TryWrite(flow);
+            if (!_flowChannel.Channel.Writer.TryWrite(flow))
+            {
+                _logger.LogWarning("Flow channel full - dropping flow update for {CommunityId}",
+                    flow.CommunityId);
+            }
 
             // hook per analisi degli eventi dal codice.
             // _observer.OnTcpEvent(evt, flow) mutato temporaneamente finché non ho un implementazione concreta
